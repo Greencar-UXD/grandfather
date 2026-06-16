@@ -229,6 +229,46 @@
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
+  // ── 의문문이면 문장 끝에 물음표를 자동으로 붙임 ──
+  // 음성인식(Web Speech)은 한국어 문장부호를 안 넣어 주므로 앱에서 판단한다.
+  // 원칙: "정밀도 우선" — 평서문에 잘못 ?를 붙이느니 차라리 의문문 일부를 놓친다.
+  var WH_WORDS = ["누구","누가","뭐","무엇","뭘","무슨","어떤","어느","어디","언제","왜","어째서","어찌","어떻게","얼마","얼마나","몇","무얼","무어"];
+  var STMT_END = ["다","라","자","네","군","죠","지","데","대","마","음","거야","거든","잖아","구나","더라","더군","다고","다니까","던데","네요","군요","데요","거든요","잖아요","지요","더라고","더라고요","는데","은데"];
+  function jong(ch) { var o = ch.charCodeAt(0); return (o >= 0xAC00 && o <= 0xD7A3) ? (o - 0xAC00) % 28 : -1; }
+  function endsWithAny(s, arr) { for (var i = 0; i < arr.length; i++) { if (s.slice(-arr[i].length) === arr[i]) return true; } return false; }
+  function hasMidJi(core) { var idx = core.indexOf("지"); while (idx !== -1) { if (idx !== core.length - 1) return true; idx = core.indexOf("지", idx + 1); } return false; }
+  function looksLikeQuestion(raw) {
+    var core = raw.replace(/[\s.?!…。！？]+$/, "");
+    if (core.length < 2) return false;
+    // -까/-까요 : 격식 의문(-ㅂ니까)은 통과, 이유의 -다니까/-으니까는 제외
+    var base = null;
+    if (core.slice(-2) === "까요") base = core.slice(0, -2);
+    else if (core.slice(-1) === "까") base = core.slice(0, -1);
+    if (base !== null) {
+      if (base.slice(-1) === "니") return base.length >= 2 && jong(base.charAt(base.length - 2)) === 17; // 앞 음절 ㅂ받침
+      return true;
+    }
+    if (core.slice(-2) === "나요") return true;
+    if (core.slice(-1) === "냐" && core.slice(-2) !== "아냐") return true;
+    if (["었니","았니","겠니","였니"].indexOf(core.slice(-2)) !== -1) return true;
+    var sufs = ["가요", "가"]; // -ㄴ가(요): 가/가요 앞 음절이 ㄴ받침일 때 (가다의 '가요'와 구분)
+    for (var i = 0; i < sufs.length; i++) {
+      if (core.slice(-sufs[i].length) === sufs[i] && jong(core.charAt(core.length - sufs[i].length - 1)) === 4) return true;
+    }
+    if (core.slice(-2) === "래요" && jong(core.charAt(core.length - 3)) === 8) return true; // -ㄹ래요
+    var hasWh = false;
+    for (var k = 0; k < WH_WORDS.length; k++) { if (core.indexOf(WH_WORDS[k]) !== -1) { hasWh = true; break; } }
+    // 의문사가 있고, 간접의문(-는지 등)이 아니며, 평서 종결이 아니면 의문문으로 본다
+    if (hasWh && !hasMidJi(core) && !endsWithAny(core, STMT_END)) return true;
+    return false;
+  }
+  function autoPunctuate(text) {
+    var t = text.replace(/\s+$/, "");
+    if (!t) return text;
+    if (".?!…。！？".indexOf(t.charAt(t.length - 1)) !== -1) return t; // 이미 문장부호가 있으면 그대로
+    return looksLikeQuestion(t) ? t + "?" : t;
+  }
+
   function setMode(isListening) {
     listening = isListening;
     body.classList.toggle("listening", isListening);
@@ -341,6 +381,7 @@
       finalText = (finalText + " " + interimText).trim();
       interimText = "";
     }
+    if (finalText) finalText = autoPunctuate(finalText); // 의문문이면 끝에 ? 붙임
     setMode(false);
     render();
     setStatus(finalText ? "다 적었어요. 천천히 읽어 보세요." : "들린 말이 없어요. 다시 한 번 말씀해 주세요.");
