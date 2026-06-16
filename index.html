@@ -113,6 +113,16 @@
   .notice[hidden] { display: none; }
   .notice b { color: #7e1d1d; }
 
+  /* ── 앱 내 브라우저(카톡/문자) 안내 배너 ── */
+  .inapp { background: #fff3cd; border-bottom: 2px solid #ffd24d; color: #6b5200; padding: 14px 16px; text-align: center; }
+  .inapp[hidden] { display: none; }
+  .inapp .msg { font-size: 18px; font-weight: 800; line-height: 1.5; }
+  .inapp .btns { display: flex; gap: 8px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+  .inapp .btns button { font: inherit; font-weight: 800; font-size: 17px; padding: 13px 18px; border-radius: 14px; border: none; cursor: pointer; }
+  .inapp #openChrome { background: var(--brand); color: #fff; }
+  .inapp #copyUrl { background: #fff; color: var(--brand); border: 1.5px solid var(--brand); }
+  .inapp .hint { font-size: 14px; margin-top: 10px; color: #8a6d12; }
+
   @media (min-width: 700px) {
     :root { --fs: 52px; }
     header .brand { font-size: 20px; }
@@ -120,6 +130,15 @@
 </style>
 </head>
 <body>
+  <div class="inapp" id="inappBar" hidden>
+    <div class="msg">⚠️ 지금은 <b>카카오톡·문자 안의 화면</b>이라<br>마이크가 막혀요. <b>크롬</b>에서 열어 주세요.</div>
+    <div class="btns">
+      <button id="openChrome" type="button">크롬에서 열기 ▶</button>
+      <button id="copyUrl" type="button">주소 복사</button>
+    </div>
+    <div class="hint">안 열리면: 오른쪽 위(또는 아래) ⋮ 메뉴 → “다른 브라우저로 열기”</div>
+  </div>
+
   <header>
     <div class="brand"><span class="dot" aria-hidden="true"></span>또박또박</div>
     <div class="fontctl" role="group" aria-label="글씨 크기 조절">
@@ -164,6 +183,32 @@
   var fontDown = document.getElementById("fontDown");
 
   var PLACEHOLDER = "아래 파란 버튼을 누르고 또박또박 말씀해 주세요.";
+
+  // ── 카카오톡/문자 등 '앱 내 브라우저'(웹뷰)에서 열면 마이크 권한이 매번 반복되거나 막힌다.
+  //    감지되면 크롬으로 열도록 안내 배너를 띄운다. (음성인식 지원 여부보다 먼저 실행) ──
+  (function setupInApp() {
+    var ua = navigator.userAgent || "";
+    var inApp = /KAKAOTALK/i.test(ua) ||
+                /FBAN|FBAV|FB_IAB|Instagram|Line\/|NAVER|DaumApps|; wv\)/i.test(ua);
+    if (!inApp) return;
+    var bar = document.getElementById("inappBar");
+    if (bar) bar.hidden = false;
+    var openBtn = document.getElementById("openChrome");
+    var copyBtn = document.getElementById("copyUrl");
+    if (openBtn) openBtn.addEventListener("click", function () {
+      var u = location.href;
+      if (/KAKAOTALK/i.test(ua)) { location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(u); return; }
+      var hp = location.host + location.pathname + location.search; // 안드로이드: 크롬으로 강제 오픈
+      location.href = "intent://" + hp + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" + encodeURIComponent(u) + ";end";
+    });
+    if (copyBtn) copyBtn.addEventListener("click", function () {
+      var u = location.href;
+      var done = function () { copyBtn.textContent = "복사됐어요 ✓"; };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(u).then(done, function () { window.prompt("이 주소를 길게 눌러 복사하세요", u); });
+      } else { window.prompt("이 주소를 길게 눌러 복사하세요", u); }
+    });
+  })();
 
   // ── 글씨 크기 (기억) ──
   var FS_MIN = 26, FS_MAX = 84, FS_STEP = 6;
