@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b66ff">
+<title>또박또박 — 말하면 글자로</title>
+<meta name="description" content="말하면 큰 글씨로 보여 드려요. 귀가 어두우신 분과의 대화를 돕는 음성→글자 화면.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='54' font-size='78' text-anchor='middle' dominant-baseline='central'>💬</text></svg>">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --ink: #11151c;        /* 본문 글씨 (최대 대비) */
+    --ink-2: #5a626e;
+    --card: #ffffff;
+    --line: #e3e7ee;
+    --brand: #0b66ff;      /* 듣기 시작 (파랑) */
+    --brand-press: #0a52cc;
+    --stop: #e23b3b;       /* 말 끝 (빨강) */
+    --stop-press: #c12b2b;
+    --ok: #1f8a4c;
+    --fs: 40px;            /* 읽기 영역 기본 글씨 크기 (조절됨) */
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, sans-serif;
+    line-height: 1.5; -webkit-font-smoothing: antialiased;
+    display: flex; flex-direction: column;
+    /* 안전영역(노치) 대응 */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    overscroll-behavior: none; user-select: none;
+  }
+
+  /* ── 상단 바 ── */
+  header {
+    flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--card);
+  }
+  header .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px; letter-spacing: -0.4px; }
+  header .brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ink-2); flex: 0 0 auto; transition: background .2s; }
+  body.listening header .brand .dot { background: var(--stop); animation: blink 1s steps(2, start) infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+
+  /* 글씨 크기 조절 */
+  .fontctl { display: flex; align-items: center; gap: 6px; }
+  .fontctl button {
+    font: inherit; font-weight: 800; font-size: 18px; width: 44px; height: 44px;
+    border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 12px; cursor: pointer;
+  }
+  .fontctl button:active { background: #eef1f6; }
+  .fontctl .lbl { font-size: 13px; color: var(--ink-2); }
+
+  /* ── 읽기 영역 (할아버지가 보는 큰 글씨) ── */
+  main {
+    flex: 1 1 auto; min-height: 0; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 22px 22px 8px; display: flex; flex-direction: column;
+  }
+  #screen {
+    flex: 1 1 auto; display: flex; align-items: center; justify-content: center;
+    text-align: center; word-break: keep-all; overflow-wrap: anywhere;
+  }
+  #text {
+    font-size: var(--fs); font-weight: 700; line-height: 1.45; letter-spacing: -0.5px;
+    color: var(--ink); white-space: pre-wrap; max-width: 920px;
+  }
+  /* 듣는 중 아직 확정 안 된 말은 흐리게 */
+  #text .interim { color: var(--ink-2); font-weight: 600; }
+  /* 안내 문구(처음/대기 상태) */
+  #text.placeholder { color: var(--ink-2); font-weight: 600; font-size: calc(var(--fs) * 0.62); }
+
+  .status { flex: 0 0 auto; text-align: center; font-size: 15px; color: var(--ink-2); min-height: 22px; padding: 4px 0 2px; }
+  body.listening .status { color: var(--stop); font-weight: 700; }
+
+  /* ── 하단 큰 버튼 ── */
+  footer { flex: 0 0 auto; padding: 14px 18px calc(18px + env(safe-area-inset-bottom)); }
+  #mainBtn {
+    width: 100%; min-height: 92px; border: none; border-radius: 22px;
+    font-family: inherit; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;
+    color: #fff; background: var(--brand); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    box-shadow: 0 6px 20px rgba(11,102,255,.28); transition: transform .06s, background .15s;
+  }
+  #mainBtn .ico { font-size: 30px; line-height: 1; }
+  #mainBtn:active { transform: scale(.985); }
+  body.listening #mainBtn { background: var(--stop); box-shadow: 0 6px 20px rgba(226,59,59,.32); }
+  body.listening #mainBtn:active { background: var(--stop-press); }
+  #mainBtn:disabled { background: #aeb6c2; box-shadow: none; cursor: default; }
+
+  /* 듣는 중 펄스 표시 */
+  .pulse { display: inline-flex; align-items: center; gap: 5px; }
+  .pulse i { width: 6px; height: 20px; background: rgba(255,255,255,.9); border-radius: 3px; animation: eq 1s ease-in-out infinite; }
+  .pulse i:nth-child(2){ animation-delay:.15s } .pulse i:nth-child(3){ animation-delay:.3s }
+  @keyframes eq { 0%,100%{ transform: scaleY(.4) } 50%{ transform: scaleY(1) } }
+
+  /* 보조 버튼 (지우기) */
+  .sub { display: flex; justify-content: center; margin-top: 12px; }
+  .sub button {
+    font: inherit; font-size: 16px; font-weight: 700; color: var(--ink-2);
+    background: transparent; border: none; padding: 8px 14px; cursor: pointer; border-radius: 10px;
+  }
+  .sub button:active { background: #e9edf3; }
+  .sub button[hidden] { display: none; }
+
+  /* 미지원/오류 안내 박스 */
+  .notice {
+    margin: 0 18px 12px; padding: 14px 16px; border-radius: 14px;
+    background: #fff5f5; border: 1px solid #f4c9c9; color: #9a2727; font-size: 15px; line-height: 1.55;
+  }
+  .notice[hidden] { display: none; }
+  .notice b { color: #7e1d1d; }
+
+  @media (min-width: 700px) {
+    :root { --fs: 52px; }
+    header .brand { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="dot" aria-hidden="true"></span>또박또박</div>
+    <div class="fontctl" role="group" aria-label="글씨 크기 조절">
+      <span class="lbl">글씨</span>
+      <button id="fontDown" aria-label="글씨 작게" type="button">가&minus;</button>
+      <button id="fontUp" aria-label="글씨 크게" type="button">가&plus;</button>
+    </div>
+  </header>
+
+  <div class="notice" id="notice" hidden></div>
+
+  <main>
+    <div id="screen">
+      <div id="text" class="placeholder" aria-live="polite" aria-atomic="true">아래 파란 버튼을 누르고 또박또박 말씀해 주세요.</div>
+    </div>
+    <div class="status" id="status">&nbsp;</div>
+  </main>
+
+  <footer>
+    <button id="mainBtn" type="button" aria-label="말하기 시작">
+      <span class="ico" aria-hidden="true">🎤</span><span id="btnLabel">눌러서 말하기</span>
+    </button>
+    <div class="sub">
+      <button id="clearBtn" type="button" hidden>🧹 화면 지우기</button>
+    </div>
+  </footer>
+
+<script>
+(function () {
+  "use strict";
+
+  // ── DOM ──
+  var body     = document.body;
+  var textEl   = document.getElementById("text");
+  var statusEl = document.getElementById("status");
+  var mainBtn  = document.getElementById("mainBtn");
+  var btnLabel = document.getElementById("btnLabel");
+  var btnIco   = mainBtn.querySelector(".ico");
+  var clearBtn = document.getElementById("clearBtn");
+  var noticeEl = document.getElementById("notice");
+  var fontUp   = document.getElementById("fontUp");
+  var fontDown = document.getElementById("fontDown");
+
+  var PLACEHOLDER = "아래 파란 버튼을 누르고 또박또박 말씀해 주세요.";
+
+  // ── 글씨 크기 (기억) ──
+  var FS_MIN = 26, FS_MAX = 84, FS_STEP = 6;
+  function loadFs() {
+    var v = parseInt(localStorage.getItem("ttbk_fs"), 10);
+    return (v >= FS_MIN && v <= FS_MAX) ? v : (window.innerWidth >= 700 ? 52 : 40);
+  }
+  function applyFs(v) {
+    v = Math.max(FS_MIN, Math.min(FS_MAX, v));
+    document.documentElement.style.setProperty("--fs", v + "px");
+    try { localStorage.setItem("ttbk_fs", String(v)); } catch (e) {}
+    fontDown.disabled = (v <= FS_MIN);
+    fontUp.disabled   = (v >= FS_MAX);
+    return v;
+  }
+  var fs = applyFs(loadFs());
+  fontUp.addEventListener("click", function () { fs = applyFs(fs + FS_STEP); });
+  fontDown.addEventListener("click", function () { fs = applyFs(fs - FS_STEP); });
+
+  // ── 음성인식 지원 확인 ──
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    showNotice(
+      "<b>이 브라우저는 음성 인식을 지원하지 않아요.</b><br>" +
+      "안드로이드는 <b>크롬</b>, 아이폰은 <b>사파리</b>로 열어 주세요. " +
+      "(컴퓨터는 크롬 추천)"
+    );
+    mainBtn.disabled = true;
+    btnLabel.textContent = "사용할 수 없어요";
+    return;
+  }
+
+  // ── 상태 ──
+  var recognition = null;
+  var listening   = false;   // 사용자가 "말하기"를 눌러 듣는 중인지
+  var finalText   = "";      // 확정된 문장(누적)
+  var interimText = "";      // 아직 확정 안 된 말
+
+  function showNotice(html) { noticeEl.innerHTML = html; noticeEl.hidden = false; }
+  function hideNotice()     { noticeEl.hidden = true; }
+  function setStatus(s)     { statusEl.textContent = s || " "; }
+
+  function render() {
+    var shown = (finalText + (interimText ? (finalText ? " " : "") + interimText : "")).trim();
+    if (!shown) {
+      textEl.className = "placeholder";
+      textEl.textContent = listening ? "듣고 있어요. 말씀해 주세요…" : PLACEHOLDER;
+      return;
+    }
+    textEl.className = "";
+    if (interimText) {
+      textEl.innerHTML = escapeHtml(finalText) +
+        (finalText ? " " : "") +
+        '<span class="interim">' + escapeHtml(interimText) + "</span>";
+    } else {
+      textEl.textContent = finalText;
+    }
+    // 길어지면 항상 끝(최근 말)이 보이도록
+    textEl.scrollIntoView({ block: "end", behavior: "smooth" });
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function setMode(isListening) {
+    listening = isListening;
+    body.classList.toggle("listening", isListening);
+    if (isListening) {
+      btnIco.textContent = "";
+      btnIco.innerHTML = '<span class="pulse" aria-hidden="true"><i></i><i></i><i></i></span>';
+      btnLabel.textContent = "말 다 했어요";
+      mainBtn.setAttribute("aria-label", "말 다 했어요 (끝내기)");
+      clearBtn.hidden = true;
+    } else {
+      btnIco.innerHTML = "🎤";
+      btnLabel.textContent = finalText ? "다시 말하기" : "눌러서 말하기";
+      mainBtn.setAttribute("aria-label", "말하기 시작");
+      clearBtn.hidden = !finalText;
+    }
+  }
+
+  // ── 음성인식 만들기 ──
+  function buildRecognition() {
+    var r = new SR();
+    r.lang = "ko-KR";
+    r.continuous = true;       // 길게 말해도 끊지 않음
+    r.interimResults = true;   // 말하는 중간에도 실시간 표시
+
+    r.onresult = function (e) {
+      interimText = "";
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        var res = e.results[i];
+        var t = res[0] && res[0].transcript ? res[0].transcript : "";
+        if (res.isFinal) {
+          finalText = (finalText + " " + t.trim()).trim();
+        } else {
+          interimText += t;
+        }
+      }
+      render();
+    };
+
+    r.onerror = function (e) {
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+        listening = false;
+        showNotice(
+          "<b>마이크 사용이 차단되어 있어요.</b><br>" +
+          "주소창 옆 자물쇠 아이콘 → 마이크 <b>허용</b>으로 바꾼 뒤 다시 눌러 주세요."
+        );
+        stopAll();
+      } else if (e.error === "no-speech") {
+        setStatus("소리가 들리지 않아요. 조금 더 크게 말씀해 주세요.");
+      } else if (e.error === "aborted") {
+        /* 사용자가 끝낸 경우 — 무시 */
+      } else {
+        setStatus("잠깐 문제가 생겼어요. 다시 시도할게요.");
+      }
+    };
+
+    // 모바일은 잠깐 멈추면 자동 종료됨 → 사용자가 끝내기 전이면 다시 켠다
+    r.onend = function () {
+      if (listening) {
+        try { r.start(); } catch (err) { /* 곧 다시 시도됨 */ }
+      } else {
+        finishUp();
+      }
+    };
+
+    return r;
+  }
+
+  function start() {
+    hideNotice();
+    finalText = "";
+    interimText = "";
+    setMode(true);
+    setStatus("듣고 있어요…");
+    render();
+    recognition = buildRecognition();
+    try {
+      recognition.start();
+    } catch (err) {
+      // 이미 시작된 상태 등 — 한 번 정리 후 재시도
+      try { recognition.abort(); } catch (e) {}
+      recognition = buildRecognition();
+      try { recognition.start(); } catch (e2) {
+        setStatus("마이크를 시작할 수 없어요. 페이지를 새로고침 해 주세요.");
+        setMode(false);
+      }
+    }
+  }
+
+  function stop() {
+    // 사용자가 "말 다 했어요"를 누름 → 듣기 종료 → onend에서 마무리
+    listening = false;
+    setStatus("정리하고 있어요…");
+    if (recognition) {
+      try { recognition.stop(); } catch (e) { finishUp(); }
+    } else {
+      finishUp();
+    }
+  }
+
+  function stopAll() {
+    listening = false;
+    if (recognition) { try { recognition.abort(); } catch (e) {} }
+    setMode(false);
+    render();
+  }
+
+  function finishUp() {
+    // 남은 중간 말도 확정 처리
+    if (interimText) {
+      finalText = (finalText + " " + interimText).trim();
+      interimText = "";
+    }
+    setMode(false);
+    render();
+    setStatus(finalText ? "다 적었어요. 천천히 읽어 보세요." : "들린 말이 없어요. 다시 한 번 말씀해 주세요.");
+  }
+
+  function clearScreen() {
+    finalText = "";
+    interimText = "";
+    setMode(false);
+    setStatus("");
+    render();
+  }
+
+  // ── 버튼 연결 ──
+  mainBtn.addEventListener("click", function () {
+    if (listening) stop();
+    else start();
+  });
+  clearBtn.addEventListener("click", clearScreen);
+
+  // 듣는 중 화면이 꺼지거나 탭을 벗어나면 안전하게 마무리
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden && listening) stop();
+  });
+
+  // 초기 렌더
+  setMode(false);
+  render();
+})();
+</script>
+</body>
+</html>
