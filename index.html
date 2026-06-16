@@ -201,6 +201,7 @@
   var listening   = false;   // 사용자가 "말하기"를 눌러 듣는 중인지
   var finalText   = "";      // 확정된 문장(누적)
   var interimText = "";      // 아직 확정 안 된 말
+  var micReady    = false;   // getUserMedia로 마이크 권한을 한 번 확보했는지(안드로이드 반복 허용창 방지)
 
   function showNotice(html) { noticeEl.innerHTML = html; noticeEl.hidden = false; }
   function hideNotice()     { noticeEl.hidden = true; }
@@ -336,25 +337,53 @@
     return r;
   }
 
+  // 안드로이드 등에서 recognition.start()가 반복될 때마다 마이크 허용창이 다시 뜨는 걸 막기 위해
+  // getUserMedia로 '지속 허용'을 한 번 확보해 둔다. (권한만 받고 스트림은 곧바로 닫는다)
+  function ensureMic(cb) {
+    if (micReady) { cb(true); return; }
+    var md = navigator.mediaDevices;
+    if (!md || !md.getUserMedia) { cb(true); return; } // 못 쓰면 그냥 인식 시도
+    md.getUserMedia({ audio: true }).then(function (stream) {
+      try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+      micReady = true;
+      cb(true);
+    }).catch(function (e) {
+      var name = (e && e.name) ? e.name : "";
+      cb(!(name === "NotAllowedError" || name === "SecurityError")); // 차단이면 false
+    });
+  }
+
   function start() {
     hideNotice();
-    finalText = "";
-    interimText = "";
-    setMode(true);
-    setStatus("듣고 있어요…");
-    render();
-    recognition = buildRecognition();
-    try {
-      recognition.start();
-    } catch (err) {
-      // 이미 시작된 상태 등 — 한 번 정리 후 재시도
-      try { recognition.abort(); } catch (e) {}
-      recognition = buildRecognition();
-      try { recognition.start(); } catch (e2) {
-        setStatus("마이크를 시작할 수 없어요. 페이지를 새로고침 해 주세요.");
+    setStatus("마이크를 준비하고 있어요…");
+    ensureMic(function (ok) {
+      if (!ok) {
+        showNotice(
+          "<b>마이크 사용이 차단되어 있어요.</b><br>" +
+          "주소창 옆 자물쇠(또는 ⋮ 메뉴) → 사이트 설정 → 마이크 <b>허용</b>으로 바꾼 뒤 다시 눌러 주세요."
+        );
+        setStatus(" ");
         setMode(false);
+        return;
       }
-    }
+      finalText = "";
+      interimText = "";
+      setMode(true);
+      setStatus("듣고 있어요…");
+      render();
+      recognition = buildRecognition();
+      try {
+        recognition.start();
+      } catch (err) {
+        // 이미 시작된 상태 등 — 한 번 정리 후 재시도
+        try { recognition.abort(); } catch (e) {}
+        recognition = buildRecognition();
+        try { recognition.start(); } catch (e2) {
+          setStatus("마이크를 시작할 수 없어요. 페이지를 새로고침 해 주세요.");
+          setMode(false);
+        }
+      }
+    });
   }
 
   function stop() {
