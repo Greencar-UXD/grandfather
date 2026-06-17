@@ -244,16 +244,25 @@
   // ── 상태 ──
   var recognition = null;
   var listening   = false;   // 사용자가 "말하기"를 눌러 듣는 중인지
-  var finalText   = "";      // 확정된 문장(누적)
+  var finalText   = "";      // 확정된 문장(누적, 세션 경계에서만 합쳐짐)
+  var sessionFinal = "";     // 현재 인식 세션에서 확정된 말(매 이벤트 다시 계산)
   var interimText = "";      // 아직 확정 안 된 말
+  var lastCommitted = "";    // 직전 세션에서 finalText에 합친 말 — 재시작 시 중복 보고 제거용
+  var lastCommittedAt = 0;   // 그 시각(ms). 재시작 직후 짧은 창에서만 중복 보고를 제거하기 위함
+  var guardArmed  = false;   // 세션 시작 직후 중복-보고 제거 가드 활성 여부
+  var starting    = false;   // start() 처리 중 버튼 재진입(더블탭) 차단
   var micReady    = false;   // getUserMedia로 마이크 권한을 한 번 확보했는지(안드로이드 반복 허용창 방지)
+  var REPLAY_WINDOW_MS = 1500; // 재시작 후 이 시간 안에 같은 말이 다시 오면 '플랫폼 재보고'로 보고 제거(그 이후엔 사용자가 일부러 반복한 것으로 보고 통과)
 
   function showNotice(html) { noticeEl.innerHTML = html; noticeEl.hidden = false; }
   function hideNotice()     { noticeEl.hidden = true; }
   function setStatus(s)     { statusEl.textContent = s || " "; }
 
   function render() {
-    var shown = (finalText + (interimText ? (finalText ? " " : "") + interimText : "")).trim();
+    // 확정문(finalText) + 현재 세션 확정분(sessionFinal)을 검은 글씨로, 중간 말(interim)은 회색으로
+    var solid = finalText;
+    if (sessionFinal) solid = (solid ? solid + " " : "") + sessionFinal;
+    var shown = (solid + (interimText ? (solid ? " " : "") + interimText : "")).trim();
     if (!shown) {
       textEl.className = "placeholder";
       textEl.textContent = listening ? "듣고 있어요. 말씀해 주세요…" : PLACEHOLDER;
@@ -261,11 +270,11 @@
     }
     textEl.className = "";
     if (interimText) {
-      textEl.innerHTML = escapeHtml(finalText) +
-        (finalText ? " " : "") +
+      textEl.innerHTML = escapeHtml(solid) +
+        (solid ? " " : "") +
         '<span class="interim">' + escapeHtml(interimText) + "</span>";
     } else {
-      textEl.textContent = finalText;
+      textEl.textContent = solid;
     }
     // 길어지면 항상 끝(최근 말)이 보이도록
     textEl.scrollIntoView({ block: "end", behavior: "smooth" });
@@ -273,6 +282,14 @@
 
   function escapeHtml(s) {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // 세션(연속 인식 한 단위)의 확정분을 finalText로 합치고, 다음 세션을 위한 중복-보고 가드를 무장한다.
+  function commitSession() {
+    var piece = sessionFinal.trim();
+    if (piece) { finalText = (finalText + " " + piece).trim(); lastCommitted = piece; lastCommittedAt = Date.now(); }
+    sessionFinal = "";
+    guardArmed = true;
   }
 
   // ── 의문문이면 문장 끝에 물음표를 자동으로 붙임 ──
@@ -317,6 +334,7 @@
 
   function setMode(isListening) {
     listening = isListening;
+    starting = false;          // 상태 전환 완료 → 버튼 잠금 해제
     body.classList.toggle("listening", isListening);
     if (isListening) {
       btnIco.textContent = "";
@@ -340,16 +358,29 @@
     r.interimResults = true;   // 말하는 중간에도 실시간 표시
 
     r.onresult = function (e) {
-      interimText = "";
-      for (var i = e.resultIndex; i < e.results.length; i++) {
+      // resultIndex에 의존하지 않고 결과 목록 전체를 인덱스 기준으로 다시 계산한다.
+      // 같은 인덱스의 확정 결과가 재보고돼도 '덮어쓰기'가 되므로 같은 말이 두 번 쌓이지 않는다.
+      // (안드로이드 Chrome은 resultIndex를 0에 고정한 채 확정 결과를 재보고하는 버그가 있음)
+      var finals = [], interim = "";
+      for (var i = 0; i < e.results.length; i++) {
         var res = e.results[i];
-        var t = res[0] && res[0].transcript ? res[0].transcript : "";
-        if (res.isFinal) {
-          finalText = (finalText + " " + t.trim()).trim();
-        } else {
-          interimText += t;
-        }
+        var t = (res[0] && res[0].transcript) ? res[0].transcript : "";
+        if (res.isFinal) finals[i] = t.trim();
+        else interim += t;
       }
+      var sf = finals.filter(Boolean).join(" ").trim();
+      // 재시작 직후, 직전 세션의 확정 문장을 그대로 다시 보고하는 안드로이드 동작이면 1회만 걷어낸다.
+      // 단, 재시작 직후 짧은 창(REPLAY_WINDOW_MS) 안에서만 적용한다. 그 이후의 동일 문장은
+      // 사용자가 일부러 같은 말을 반복한 것으로 보고 그대로 통과시킨다(정당한 말이 삭제되는 일 방지).
+      if (guardArmed && lastCommitted && sf) {
+        if (Date.now() - lastCommittedAt > REPLAY_WINDOW_MS) { guardArmed = false; }  // 창 지남 → 정상 입력
+        else if (sf === lastCommitted) { sf = ""; }                             // 즉각 replay → 제거
+        else if (sf.indexOf(lastCommitted + " ") === 0) {                       // replay + 새 말
+          sf = sf.slice(lastCommitted.length).trim(); guardArmed = false;
+        } else { guardArmed = false; }                                          // 새 말 시작 → 가드 해제
+      }
+      sessionFinal = sf;
+      interimText = interim;
       render();
     };
 
@@ -373,6 +404,7 @@
     // 모바일은 잠깐 멈추면 자동 종료됨 → 사용자가 끝내기 전이면 다시 켠다
     r.onend = function () {
       if (listening) {
+        commitSession();                                 // 이번 세션 확정분을 잠그고(다음 세션 가드 무장)
         try { r.start(); } catch (err) { /* 곧 다시 시도됨 */ }
       } else {
         finishUp();
@@ -412,7 +444,11 @@
         return;
       }
       finalText = "";
+      sessionFinal = "";
       interimText = "";
+      lastCommitted = "";
+      lastCommittedAt = 0;
+      guardArmed = false;
       setMode(true);
       setStatus("듣고 있어요…");
       render();
@@ -444,12 +480,15 @@
 
   function stopAll() {
     listening = false;
+    sessionFinal = "";
+    guardArmed = false;
     if (recognition) { try { recognition.abort(); } catch (e) {} }
     setMode(false);
     render();
   }
 
   function finishUp() {
+    commitSession();          // 마지막 세션 확정분을 먼저 합친다
     // 남은 중간 말도 확정 처리
     if (interimText) {
       finalText = (finalText + " " + interimText).trim();
@@ -463,7 +502,11 @@
 
   function clearScreen() {
     finalText = "";
+    sessionFinal = "";
     interimText = "";
+    lastCommitted = "";
+    lastCommittedAt = 0;
+    guardArmed = false;
     setMode(false);
     setStatus("");
     render();
@@ -471,8 +514,10 @@
 
   // ── 버튼 연결 ──
   mainBtn.addEventListener("click", function () {
-    if (listening) stop();
-    else start();
+    if (listening) { stop(); return; }
+    if (starting) return;   // 시작 처리 중 더블탭/고스트클릭으로 인식 인스턴스가 두 개 생기는 것 방지
+    starting = true;
+    start();
   });
   clearBtn.addEventListener("click", clearScreen);
 
