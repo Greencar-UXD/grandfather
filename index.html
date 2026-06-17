@@ -253,10 +253,43 @@
   var starting    = false;   // start() 처리 중 버튼 재진입(더블탭) 차단
   var micReady    = false;   // getUserMedia로 마이크 권한을 한 번 확보했는지(안드로이드 반복 허용창 방지)
   var REPLAY_WINDOW_MS = 1500; // 재시작 후 이 시간 안에 같은 말이 다시 오면 '플랫폼 재보고'로 보고 제거(그 이후엔 사용자가 일부러 반복한 것으로 보고 통과)
+  var isAndroid = /android/i.test(navigator.userAgent || ""); // 안드로이드 Chrome은 Web Speech 중복 보고가 심함
+  var DEBUG = (location.search || "").indexOf("debug=1") !== -1; // ?debug=1 이면 실제 인식 이벤트를 화면에 기록
 
   function showNotice(html) { noticeEl.innerHTML = html; noticeEl.hidden = false; }
   function hideNotice()     { noticeEl.hidden = true; }
   function setStatus(s)     { statusEl.textContent = s || " "; }
+
+  // ── 디버그 로그 (?debug=1) : 안드로이드 실제 인식 이벤트를 화면에 찍어 복사할 수 있게 한다 ──
+  var dbgLog = [], dbgBox = null, dbgT0 = 0;
+  function dbg(line) {
+    if (!DEBUG) return;
+    if (!dbgT0) dbgT0 = Date.now();
+    dbgLog.push("+" + (Date.now() - dbgT0) + "ms  " + line);
+    if (dbgLog.length > 500) dbgLog.shift();
+    if (!dbgBox) {
+      dbgBox = document.createElement("div");
+      dbgBox.setAttribute("style", "position:fixed;left:0;right:0;bottom:0;max-height:44vh;background:#000;color:#0f0;font:12px/1.4 ui-monospace,monospace;z-index:99999;padding:6px;overflow:auto;white-space:pre-wrap;");
+      var bar = document.createElement("div");
+      bar.setAttribute("style", "position:sticky;top:0;background:#000;padding-bottom:6px;");
+      var copy = document.createElement("button");
+      copy.textContent = "로그 복사"; copy.setAttribute("style", "margin-right:8px;font-size:14px;padding:6px 10px;");
+      copy.addEventListener("click", function () {
+        var txt = dbgLog.join("\n");
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(function () { copy.textContent = "복사됨 ✓"; }, function () { window.prompt("아래를 복사하세요", txt); });
+        else window.prompt("아래를 복사하세요", txt);
+      });
+      var clr = document.createElement("button");
+      clr.textContent = "지우기"; clr.setAttribute("style", "font-size:14px;padding:6px 10px;");
+      clr.addEventListener("click", function () { dbgLog.length = 0; dbgBox._pre.textContent = ""; });
+      var pre = document.createElement("div");
+      bar.appendChild(copy); bar.appendChild(clr);
+      dbgBox.appendChild(bar); dbgBox.appendChild(pre);
+      document.body.appendChild(dbgBox); dbgBox._pre = pre;
+    }
+    dbgBox._pre.textContent = dbgLog.join("\n");
+    dbgBox.scrollTop = dbgBox.scrollHeight;
+  }
 
   function render() {
     // 확정문(finalText) + 현재 세션 확정분(sessionFinal)을 검은 글씨로, 중간 말(interim)은 회색으로
@@ -287,7 +320,7 @@
   // 세션(연속 인식 한 단위)의 확정분을 finalText로 합치고, 다음 세션을 위한 중복-보고 가드를 무장한다.
   function commitSession() {
     var piece = sessionFinal.trim();
-    if (piece) { finalText = (finalText + " " + piece).trim(); lastCommitted = piece; lastCommittedAt = Date.now(); }
+    if (piece) { finalText = (finalText + " " + piece).trim(); lastCommitted = piece; lastCommittedAt = Date.now(); dbg('commit "' + piece + '" -> final="' + finalText + '"'); }
     sessionFinal = "";
     guardArmed = true;
   }
@@ -354,7 +387,9 @@
   function buildRecognition() {
     var r = new SR();
     r.lang = "ko-KR";
-    r.continuous = true;       // 길게 말해도 끊지 않음
+    // 안드로이드 Chrome은 continuous=true에서 확정 결과를 중복 보고(같은/다른 인덱스)하는 일이 잦다.
+    // → 안드로이드에서는 continuous=false로 두고, 끊기면 onend에서 재시작해 이어 듣는다(누적은 finalText가 유지).
+    r.continuous = !isAndroid;
     r.interimResults = true;   // 말하는 중간에도 실시간 표시
 
     r.onresult = function (e) {
@@ -368,7 +403,24 @@
         if (res.isFinal) finals[i] = t.trim();
         else interim += t;
       }
-      var sf = finals.filter(Boolean).join(" ").trim();
+      // 안드로이드: 같은 확정 문구가 (다른 인덱스로) 인접 중복되면 하나로 합친다.
+      var sf;
+      if (isAndroid) {
+        var parts = [], prev = null;
+        for (var k = 0; k < finals.length; k++) {
+          var v = finals[k];
+          if (!v || v === prev) continue;   // 빈 칸·직전과 동일한 확정 문구 → 중복으로 보고 건너뜀
+          parts.push(v); prev = v;
+        }
+        sf = parts.join(" ").trim();
+      } else {
+        sf = finals.filter(Boolean).join(" ").trim();
+      }
+      if (DEBUG) {
+        var raw = [];
+        for (var d = 0; d < e.results.length; d++) raw.push("#" + d + (e.results[d].isFinal ? "F" : "p") + ':"' + ((e.results[d][0] && e.results[d][0].transcript) || "") + '"');
+        dbg("onresult idx=" + e.resultIndex + " n=" + e.results.length + " [" + raw.join(" ") + "] => sf=\"" + sf + "\" interim=\"" + interim + "\" armed=" + guardArmed);
+      }
       // 재시작 직후, 직전 세션의 확정 문장을 그대로 다시 보고하는 안드로이드 동작이면 1회만 걷어낸다.
       // 단, 재시작 직후 짧은 창(REPLAY_WINDOW_MS) 안에서만 적용한다. 그 이후의 동일 문장은
       // 사용자가 일부러 같은 말을 반복한 것으로 보고 그대로 통과시킨다(정당한 말이 삭제되는 일 방지).
@@ -403,6 +455,7 @@
 
     // 모바일은 잠깐 멈추면 자동 종료됨 → 사용자가 끝내기 전이면 다시 켠다
     r.onend = function () {
+      dbg("onend listening=" + listening);
       if (listening) {
         commitSession();                                 // 이번 세션 확정분을 잠그고(다음 세션 가드 무장)
         try { r.start(); } catch (err) { /* 곧 다시 시도됨 */ }
@@ -453,6 +506,7 @@
       setStatus("듣고 있어요…");
       render();
       recognition = buildRecognition();
+      dbg("start: isAndroid=" + isAndroid + " continuous=" + recognition.continuous);
       try {
         recognition.start();
       } catch (err) {
