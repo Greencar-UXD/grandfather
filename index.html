@@ -131,15 +131,25 @@
   .notice[hidden] { display: none; }
   .notice b { color: #7e1d1d; }
 
-  /* ── 앱 내 브라우저(카톡/문자) 안내 배너 ── */
-  .inapp { background: #fff3cd; border-bottom: 2px solid #ffd24d; color: #6b5200; padding: 14px 16px; text-align: center; }
-  .inapp[hidden] { display: none; }
-  .inapp .msg { font-size: 18px; font-weight: 800; line-height: 1.5; }
-  .inapp .btns { display: flex; gap: 8px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
-  .inapp .btns button { font: inherit; font-weight: 800; font-size: 17px; padding: 13px 18px; border-radius: 14px; border: none; cursor: pointer; }
-  .inapp #openChrome { background: var(--brand); color: #fff; }
-  .inapp #copyUrl { background: #fff; color: var(--brand); border: 1.5px solid var(--brand); }
-  .inapp .hint { font-size: 14px; margin-top: 10px; color: #8a6d12; }
+  /* ── 앱 내 브라우저(카톡/문자) 전체 화면 안내 ── */
+  .inapp-ov { position: fixed; inset: 0; z-index: 1000; background: rgba(17,21,28,.55);
+    display: flex; align-items: center; justify-content: center; padding: 20px; overflow: auto; }
+  .inapp-ov[hidden] { display: none; }
+  .inapp-card { background: #fff; border-radius: 24px; max-width: 460px; width: 100%;
+    padding: 30px 24px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.32); }
+  .inapp-emoji { font-size: 56px; line-height: 1; }
+  .inapp-title { font-size: 31px; font-weight: 900; color: var(--ink); margin-top: 10px; }
+  .inapp-desc { font-size: 19px; font-weight: 600; line-height: 1.65; color: var(--ink-2); margin-top: 14px; }
+  .inapp-desc b { color: var(--brand); }
+  .inapp-primary { display: block; width: 100%; margin-top: 24px; font: inherit; font-size: 23px;
+    font-weight: 900; color: #fff; background: var(--brand); border: none; border-radius: 18px; padding: 19px; cursor: pointer; }
+  .inapp-secondary { display: block; width: 100%; margin-top: 10px; font: inherit; font-size: 18px;
+    font-weight: 800; color: var(--brand); background: #fff; border: 2px solid var(--brand); border-radius: 16px; padding: 15px; cursor: pointer; }
+  .inapp-hint { font-size: 15px; line-height: 1.55; color: var(--ink-2); margin-top: 20px;
+    background: #f4f6f9; border-radius: 12px; padding: 12px 14px; }
+  .inapp-hint b { color: var(--ink); }
+  .inapp-stay { margin-top: 16px; font: inherit; font-size: 15px; color: #8a92a0;
+    background: none; border: none; text-decoration: underline; cursor: pointer; }
 
   @media (min-width: 700px) {
     :root { --fs: 52px; }
@@ -148,13 +158,16 @@
 </style>
 </head>
 <body>
-  <div class="inapp" id="inappBar" hidden>
-    <div class="msg">⚠️ 지금은 <b>카카오톡·문자 안의 화면</b>이라<br>마이크가 막혀요. <b>크롬</b>에서 열어 주세요.</div>
-    <div class="btns">
-      <button id="openChrome" type="button">크롬에서 열기 ▶</button>
-      <button id="copyUrl" type="button">주소 복사</button>
+  <div class="inapp-ov" id="inappBar" hidden>
+    <div class="inapp-card">
+      <div class="inapp-emoji">📢</div>
+      <div class="inapp-title">크롬에서 열어 주세요</div>
+      <div class="inapp-desc">지금은 <b>카카오톡 안 화면</b>이라<br>말할 때마다 마이크 허용을 물어봐요.<br><b>크롬</b>에서 열면 처음 한 번만 물어봅니다.</div>
+      <button id="openChrome" class="inapp-primary" type="button">🌐 크롬에서 열기</button>
+      <button id="copyUrl" class="inapp-secondary" type="button">주소 복사하기</button>
+      <div class="inapp-hint">안 열리면: 화면 오른쪽 위 <b>⋮</b> 메뉴 → <b>“다른 브라우저로 열기”</b></div>
+      <button id="inappStay" class="inapp-stay" type="button">그냥 여기서 볼게요</button>
     </div>
-    <div class="hint">안 열리면: 오른쪽 위(또는 아래) ⋮ 메뉴 → “다른 브라우저로 열기”</div>
   </div>
 
   <header>
@@ -213,19 +226,37 @@
     if (bar) bar.hidden = false;
     var openBtn = document.getElementById("openChrome");
     var copyBtn = document.getElementById("copyUrl");
-    if (openBtn) openBtn.addEventListener("click", function () {
+    var stayBtn = document.getElementById("inappStay");
+
+    // 앱 내 브라우저(웹뷰)는 마이크 권한을 기억하지 못해 매번 물어본다. (웹 코드로는 못 막음)
+    // → 외부 브라우저(크롬/사파리)로 빠져나가게 한다. 반드시 사용자 '탭' 안에서 실행해야 동작.
+    function openExternal() {
       var u = location.href;
-      if (/KAKAOTALK/i.test(ua)) { location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(u); return; }
-      var hp = location.host + location.pathname + location.search; // 안드로이드: 크롬으로 강제 오픈
-      location.href = "intent://" + hp + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" + encodeURIComponent(u) + ";end";
-    });
+      if (/KAKAOTALK/i.test(ua)) {                       // 카카오톡: 안드로이드·iOS 공통 (기본 브라우저로 열림)
+        location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(u); return;
+      }
+      if (/Line\//i.test(ua)) {                          // 라인: 공식 파라미터
+        location.href = u + (u.indexOf("?") !== -1 ? "&" : "?") + "openExternalBrowser=1"; return;
+      }
+      if (/android/i.test(ua)) {                         // 안드로이드 일반 웹뷰 → 크롬으로 강제
+        var hp = location.host + location.pathname + location.search;
+        location.href = "intent://" + hp + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" + encodeURIComponent(u) + ";end";
+        return;
+      }
+      // iOS 기타 인앱(인스타/페북 등)은 강제 전환이 막혀 있다 → 수동 안내를 강조
+      var hint = bar && bar.querySelector(".inapp-hint");
+      if (hint) { hint.style.background = "#fff3cd"; hint.innerHTML = "이 앱에서는 자동으로 못 열어요.<br>오른쪽 위 <b>공유/메뉴</b> → <b>“기본 브라우저(사파리)로 열기”</b><br>또는 아래 <b>주소 복사</b> 후 사파리에 붙여넣기"; }
+    }
+
+    if (openBtn) openBtn.addEventListener("click", openExternal);
     if (copyBtn) copyBtn.addEventListener("click", function () {
       var u = location.href;
-      var done = function () { copyBtn.textContent = "복사됐어요 ✓"; };
+      var done = function () { copyBtn.textContent = "복사됐어요 ✓ — 크롬에 붙여넣기"; };
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(u).then(done, function () { window.prompt("이 주소를 길게 눌러 복사하세요", u); });
       } else { window.prompt("이 주소를 길게 눌러 복사하세요", u); }
     });
+    if (stayBtn) stayBtn.addEventListener("click", function () { if (bar) bar.hidden = true; });
   })();
 
   // ── 글씨 크기 (기억) ──
