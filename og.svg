@@ -1,60 +1,34 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#eef3fb"/>
-      <stop offset="1" stop-color="#ffffff"/>
-    </linearGradient>
-    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1f7bff"/>
-      <stop offset="1" stop-color="#0b66ff"/>
-    </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="14" stdDeviation="22" flood-color="#0b66ff" flood-opacity="0.18"/>
-    </filter>
-    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#11151c" flood-opacity="0.10"/>
-    </filter>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef3fb"/><stop offset="1" stop-color="#ffffff"/></linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1f7bff"/><stop offset="1" stop-color="#0b66ff"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="14" stdDeviation="22" flood-color="#0b66ff" flood-opacity="0.18"/></filter>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#11151c" flood-opacity="0.10"/></filter>
   </defs>
-
-  <!-- 배경 -->
   <rect width="1200" height="630" fill="url(#bg)"/>
-
-  <!-- 브랜드 헤더 -->
   <g font-family="Apple SD Gothic Neo, AppleGothic, sans-serif">
     <circle cx="92" cy="86" r="13" fill="#0b66ff"/>
     <text x="118" y="98" font-size="38" font-weight="800" fill="#11151c">또박또박</text>
   </g>
-
-  <!-- 왼쪽: 메인 카피 -->
   <g font-family="Apple SD Gothic Neo, AppleGothic, sans-serif" fill="#11151c">
     <text x="90" y="270" font-size="104" font-weight="900" letter-spacing="-2">말하면,</text>
     <text x="90" y="384" font-size="104" font-weight="900" letter-spacing="-2" fill="#0b66ff">글자로.</text>
     <text x="94" y="468" font-size="38" font-weight="600" fill="#5a626e">귀가 어두우신 분과의 대화를 돕는</text>
     <text x="94" y="520" font-size="38" font-weight="600" fill="#5a626e">음성 → 글자 화면</text>
   </g>
-
-  <!-- 오른쪽: 폰 목업 -->
-  <g filter="url(#soft)">
-    <rect x="772" y="92" width="344" height="446" rx="40" fill="#ffffff" stroke="#e3e7ee" stroke-width="2"/>
-  </g>
-  <!-- 상단바 -->
+  <g filter="url(#soft)"><rect x="772" y="92" width="344" height="446" rx="40" fill="#ffffff" stroke="#e3e7ee" stroke-width="2"/></g>
   <circle cx="812" cy="138" r="9" fill="#0b66ff"/>
   <text x="832" y="147" font-family="Apple SD Gothic Neo, AppleGothic, sans-serif" font-size="22" font-weight="800" fill="#11151c">또박또박</text>
   <line x1="772" y1="170" x2="1116" y2="170" stroke="#e3e7ee" stroke-width="2"/>
-  <!-- 인식된 큰 글씨 -->
   <text x="804" y="288" font-family="Apple SD Gothic Neo, AppleGothic, sans-serif" font-size="58" font-weight="800" fill="#11151c">안녕하세요</text>
   <text x="804" y="356" font-family="Apple SD Gothic Neo, AppleGothic, sans-serif" font-size="58" font-weight="800" fill="#11151c">잘 들려요?</text>
-  <!-- 마이크 버튼 -->
-  <g filter="url(#shadow)">
-    <rect x="804" y="430" width="280" height="76" rx="38" fill="url(#brand)"/>
+  <g filter="url(#shadow)"><rect x="804" y="430" width="280" height="76" rx="38" fill="url(#brand)"/></g>
+  <g transform="translate(853,468) scale(1.55) translate(-12,-12)" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="9" y="3" width="6" height="11" rx="3" fill="#ffffff" stroke="none"/>
+    <path d="M6.5 11.5 a5.5 5.5 0 0 0 11 0"/>
+    <line x1="12" y1="17" x2="12" y2="20.5"/>
+    <line x1="8.5" y1="20.5" x2="15.5" y2="20.5"/>
   </g>
-  <g transform="translate(872,468)" fill="#ffffff">
-    <rect x="-9" y="-22" width="18" height="30" rx="9"/>
-    <path d="M -16 0 a 16 16 0 0 0 32 0" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
-    <line x1="0" y1="16" x2="0" y2="24" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
-  </g>
-  <text x="908" y="478" font-family="Apple SD Gothic Neo, AppleGothic, sans-serif" font-size="30" font-weight="800" fill="#ffffff">눌러서 말하기</text>
-
-  <!-- 하단 URL -->
+  <text x="884" y="479" font-family="Apple SD Gothic Neo, AppleGothic, sans-serif" font-size="29" font-weight="800" fill="#ffffff">눌러서 말하기</text>
   <text x="90" y="582" font-family="Menlo, monospace" font-size="26" font-weight="600" fill="#8a92a0">greencar-uxd.github.io/grandfather</text>
 </svg>
