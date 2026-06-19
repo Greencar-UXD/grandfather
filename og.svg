@@ -6,11 +6,11 @@
     <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#11151c" flood-opacity="0.10"/></filter>
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
-  <g font-family="Apple SD Gothic Neo, AppleGothic, sans-serif">
+  <g font-family="Pretendard, sans-serif">
     <circle cx="92" cy="86" r="13" fill="#0b66ff"/>
     <text x="118" y="98" font-size="38" font-weight="800" fill="#11151c">또박또박</text>
   </g>
-  <g font-family="Apple SD Gothic Neo, AppleGothic, sans-serif" fill="#11151c">
+  <g font-family="Pretendard, sans-serif" fill="#11151c">
     <text x="90" y="270" font-size="104" font-weight="900" letter-spacing="-2">말하면,</text>
     <text x="90" y="384" font-size="104" font-weight="900" letter-spacing="-2" fill="#0b66ff">글자로.</text>
     <text x="94" y="468" font-size="38" font-weight="600" fill="#5a626e">귀가 어두우신 분과의 대화를 돕는</text>
@@ -18,10 +18,10 @@
   </g>
   <g filter="url(#soft)"><rect x="772" y="92" width="344" height="446" rx="40" fill="#ffffff" stroke="#e3e7ee" stroke-width="2"/></g>
   <circle cx="812" cy="138" r="9" fill="#0b66ff"/>
-  <text x="832" y="147" font-family="Apple SD Gothic Neo, AppleGothic, sans-serif" font-size="22" font-weight="800" fill="#11151c">또박또박</text>
+  <text x="832" y="147" font-family="Pretendard, sans-serif" font-size="22" font-weight="800" fill="#11151c">또박또박</text>
   <line x1="772" y1="170" x2="1116" y2="170" stroke="#e3e7ee" stroke-width="2"/>
-  <text x="804" y="288" font-family="Apple SD Gothic Neo, AppleGothic, sans-serif" font-size="58" font-weight="800" fill="#11151c">안녕하세요</text>
-  <text x="804" y="356" font-family="Apple SD Gothic Neo, AppleGothic, sans-serif" font-size="58" font-weight="800" fill="#11151c">잘 들려요?</text>
+  <text x="804" y="288" font-family="Pretendard, sans-serif" font-size="58" font-weight="800" fill="#11151c">안녕하세요</text>
+  <text x="804" y="356" font-family="Pretendard, sans-serif" font-size="58" font-weight="800" fill="#11151c">잘 들려요?</text>
   <g filter="url(#shadow)"><rect x="804" y="430" width="280" height="76" rx="38" fill="url(#brand)"/></g>
   <g transform="translate(853,468) scale(1.55) translate(-12,-12)" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <rect x="9" y="3" width="6" height="11" rx="3" fill="#ffffff" stroke="none"/>
@@ -29,5 +29,5 @@
     <line x1="12" y1="17" x2="12" y2="20.5"/>
     <line x1="8.5" y1="20.5" x2="15.5" y2="20.5"/>
   </g>
-  <text x="884" y="479" font-family="Apple SD Gothic Neo, AppleGothic, sans-serif" font-size="29" font-weight="800" fill="#ffffff">눌러서 말하기</text>
+  <text x="884" y="479" font-family="Pretendard, sans-serif" font-size="29" font-weight="800" fill="#ffffff">눌러서 말하기</text>
 </svg>
