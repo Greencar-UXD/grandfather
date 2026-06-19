@@ -24,7 +24,7 @@
 <meta name="twitter:description" content="귀가 어두우신 분과의 대화를 돕는 음성→글자 화면.">
 <meta name="twitter:image" content="https://greencar-uxd.github.io/grandfather/og.png">
 
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='54' font-size='78' text-anchor='middle' dominant-baseline='central'>💬</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230b66ff'/><rect x='18' y='26' width='64' height='44' rx='12' fill='%23ffffff'/><path d='M34 66 L34 84 L52 66 Z' fill='%23ffffff'/></svg>">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
   :root {
@@ -102,7 +102,8 @@
     display: flex; align-items: center; justify-content: center; gap: 12px;
     box-shadow: 0 6px 20px rgba(11,102,255,.28); transition: transform .06s, background .15s;
   }
-  #mainBtn .ico { font-size: 30px; line-height: 1; }
+  #mainBtn .ico { font-size: 30px; line-height: 1; display: inline-flex; }
+  .ico-svg { width: 1em; height: 1em; display: inline-block; vertical-align: -0.14em; flex: none; }
   #mainBtn:active { transform: scale(.985); }
   body.listening #mainBtn { background: var(--stop); box-shadow: 0 6px 20px rgba(226,59,59,.32); }
   body.listening #mainBtn:active { background: var(--stop-press); }
@@ -119,7 +120,9 @@
   .sub button {
     font: inherit; font-size: 16px; font-weight: 700; color: var(--ink-2);
     background: transparent; border: none; padding: 8px 14px; cursor: pointer; border-radius: 10px;
+    display: inline-flex; align-items: center; gap: 6px;
   }
+  .sub button .ico-svg { width: 18px; height: 18px; }
   .sub button:active { background: #e9edf3; }
   .sub button[hidden] { display: none; }
 
@@ -137,12 +140,13 @@
   .inapp-ov[hidden] { display: none; }
   .inapp-card { background: #fff; border-radius: 24px; max-width: 460px; width: 100%;
     padding: 30px 24px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.32); }
-  .inapp-emoji { font-size: 56px; line-height: 1; }
+  .inapp-emoji { font-size: 56px; line-height: 1; color: var(--brand); }
   .inapp-title { font-size: 31px; font-weight: 900; color: var(--ink); margin-top: 10px; }
   .inapp-desc { font-size: 19px; font-weight: 600; line-height: 1.65; color: var(--ink-2); margin-top: 14px; }
   .inapp-desc b { color: var(--brand); }
-  .inapp-primary { display: block; width: 100%; margin-top: 24px; font: inherit; font-size: 23px;
+  .inapp-primary { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin-top: 24px; font: inherit; font-size: 23px;
     font-weight: 900; color: #fff; background: var(--brand); border: none; border-radius: 18px; padding: 19px; cursor: pointer; }
+  .inapp-primary .ico-svg { width: 24px; height: 24px; }
   .inapp-secondary { display: block; width: 100%; margin-top: 10px; font: inherit; font-size: 18px;
     font-weight: 800; color: var(--brand); background: #fff; border: 2px solid var(--brand); border-radius: 16px; padding: 15px; cursor: pointer; }
   .inapp-hint { font-size: 15px; line-height: 1.55; color: var(--ink-2); margin-top: 20px;
@@ -160,10 +164,10 @@
 <body>
   <div class="inapp-ov" id="inappBar" hidden>
     <div class="inapp-card">
-      <div class="inapp-emoji">📢</div>
+      <div class="inapp-emoji"><svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></div>
       <div class="inapp-title">크롬에서 열어 주세요</div>
       <div class="inapp-desc">지금은 <b>카카오톡 안 화면</b>이라<br>말할 때마다 마이크 허용을 물어봐요.<br><b>크롬</b>에서 열면 처음 한 번만 물어봅니다.</div>
-      <button id="openChrome" class="inapp-primary" type="button">🌐 크롬에서 열기</button>
+      <button id="openChrome" class="inapp-primary" type="button"><svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18"/></svg><span>크롬에서 열기</span></button>
       <button id="copyUrl" class="inapp-secondary" type="button">주소 복사하기</button>
       <div class="inapp-hint">안 열리면: 화면 오른쪽 위 <b>⋮</b> 메뉴 → <b>“다른 브라우저로 열기”</b></div>
       <button id="inappStay" class="inapp-stay" type="button">그냥 여기서 볼게요</button>
@@ -190,10 +194,10 @@
 
   <footer>
     <button id="mainBtn" type="button" aria-label="말하기 시작">
-      <span class="ico" aria-hidden="true">🎤</span><span id="btnLabel">눌러서 말하기</span>
+      <span class="ico" aria-hidden="true"><svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3" fill="currentColor" stroke="none"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg></span><span id="btnLabel">눌러서 말하기</span>
     </button>
     <div class="sub">
-      <button id="clearBtn" type="button" hidden>🧹 화면 지우기</button>
+      <button id="clearBtn" type="button" hidden><svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 21-4-4a2 2 0 0 1 0-3l9-9a2 2 0 0 1 3 0l4 4a2 2 0 0 1 0 3l-7 7"/><path d="M21 21H8"/><path d="m5 11 6 6"/></svg><span>화면 지우기</span></button>
     </div>
   </footer>
 
@@ -251,7 +255,7 @@
     if (openBtn) openBtn.addEventListener("click", openExternal);
     if (copyBtn) copyBtn.addEventListener("click", function () {
       var u = location.href;
-      var done = function () { copyBtn.textContent = "복사됐어요 ✓ — 크롬에 붙여넣기"; };
+      var done = function () { copyBtn.textContent = "복사됐어요 — 크롬에 붙여넣기"; };
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(u).then(done, function () { window.prompt("이 주소를 길게 눌러 복사하세요", u); });
       } else { window.prompt("이 주소를 길게 눌러 복사하세요", u); }
@@ -325,7 +329,7 @@
       copy.textContent = "로그 복사"; copy.setAttribute("style", "margin-right:8px;font-size:14px;padding:6px 10px;");
       copy.addEventListener("click", function () {
         var txt = dbgLog.join("\n");
-        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(function () { copy.textContent = "복사됨 ✓"; }, function () { window.prompt("아래를 복사하세요", txt); });
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(function () { copy.textContent = "복사됨"; }, function () { window.prompt("아래를 복사하세요", txt); });
         else window.prompt("아래를 복사하세요", txt);
       });
       var clr = document.createElement("button");
@@ -425,7 +429,7 @@
       mainBtn.setAttribute("aria-label", "말 다 했어요 (끝내기)");
       clearBtn.hidden = true;
     } else {
-      btnIco.innerHTML = "🎤";
+      btnIco.innerHTML = '<svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3" fill="currentColor" stroke="none"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg>';
       btnLabel.textContent = finalText ? "다시 말하기" : "눌러서 말하기";
       mainBtn.setAttribute("aria-label", "말하기 시작");
       clearBtn.hidden = !finalText;

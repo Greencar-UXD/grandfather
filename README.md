@@ -6,7 +6,7 @@
 
 ## 열기
 
-👉 **https://greencar-uxd.github.io/grandfather/**
+**https://greencar-uxd.github.io/grandfather/**
 
 ## 특징
 
