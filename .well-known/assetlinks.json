@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "kr.ttobak.twa",
+    "sha256_cert_fingerprints": ["4E:DB:8D:D0:70:74:78:EB:94:1E:E4:F1:A5:87:A5:2A:12:52:CA:D0:6E:02:62:EA:6B:BB:14:B5:B7:86:9D:F7"]
+  }
+}]
