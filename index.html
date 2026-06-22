@@ -217,6 +217,29 @@
   #exitBig .ico-svg { width: 26px; height: 26px; }
   body.bigscreen #exitBig { display: inline-flex; }
 
+  /* ── 함께 보기(2대 연동) 패널 ── */
+  .room-ov { position: fixed; inset: 0; z-index: 1000; background: rgba(17,21,28,.55);
+    display: flex; align-items: center; justify-content: center; padding: 20px; overflow: auto; }
+  .room-ov[hidden] { display: none; }
+  .room-card { background: #fff; border-radius: 24px; max-width: 440px; width: 100%;
+    padding: 30px 24px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.32); }
+  .room-title { font-size: 27px; font-weight: 900; color: var(--ink); }
+  .room-desc { font-size: 17px; font-weight: 600; line-height: 1.6; color: var(--ink-2); margin-top: 12px; }
+  .room-desc b { color: var(--brand); }
+  .room-code { font-family: ui-monospace, Menlo, monospace; font-size: 56px; font-weight: 900; letter-spacing: 8px;
+    color: var(--brand); margin: 22px 0 6px; }
+  .room-status { font-size: 15px; color: var(--ink-2); min-height: 22px; margin-bottom: 16px; }
+  .room-status.ok { color: var(--ok); font-weight: 700; }
+  .room-status.err { color: var(--danger-ink); font-weight: 700; }
+  .room-input { width: 100%; margin: 18px 0 8px; font: inherit; font-size: 34px; font-weight: 800;
+    text-align: center; letter-spacing: 8px; text-transform: uppercase; color: var(--ink);
+    border: 2px solid var(--line); border-radius: 16px; padding: 14px; box-sizing: border-box; }
+  .room-input:focus { outline: none; border-color: var(--brand); }
+  .room-card .inapp-primary, .room-card .inapp-secondary { margin-top: 14px; }
+  /* 받는 기기(참가자)는 마이크/컨트롤 숨김 — 보기 전용 */
+  body.viewer footer, body.viewer header .controls { display: none; }
+  body.viewer #exitBig { display: inline-flex; }
+
   @media (min-width: 700px) {
     :root { --fs: 52px; }
     header .brand { font-size: 20px; }
@@ -239,6 +262,9 @@
   <header>
     <div class="brand"><span class="dot" aria-hidden="true"></span>또박또박</div>
     <div class="controls">
+      <button id="roomBtn" class="iconbtn" aria-label="함께 보기" title="함께 보기" type="button">
+        <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </button>
       <button id="bigBtn" class="iconbtn" aria-label="큰 화면으로 보기" title="큰 화면" type="button">
         <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
       </button>
@@ -267,6 +293,38 @@
       <button id="clearBtn" type="button" hidden><svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 21-4-4a2 2 0 0 1 0-3l9-9a2 2 0 0 1 3 0l4 4a2 2 0 0 1 0 3l-7 7"/><path d="M21 21H8"/><path d="m5 11 6 6"/></svg><span>화면 지우기</span></button>
     </div>
   </footer>
+
+  <!-- 함께 보기(2대 연동) 패널 -->
+  <div class="room-ov" id="roomOv" hidden>
+    <div class="room-card">
+      <!-- 첫 화면: 역할 선택 -->
+      <div id="roomHome">
+        <div class="room-title">함께 보기</div>
+        <div class="room-desc">멀리 떨어져 있어도, <b>한 사람이 말하면</b> 다른 기기·TV에 <b>큰 글씨</b>로 보여요.</div>
+        <button id="roomHost" class="inapp-primary" type="button">내가 말하기 (방 만들기)</button>
+        <button id="roomJoin" class="inapp-secondary" type="button">큰 글씨로 받기 (방 들어가기)</button>
+        <button id="roomClose" class="inapp-stay" type="button">닫기</button>
+      </div>
+      <!-- 방장(말하는 사람): 코드 안내 -->
+      <div id="roomHostView" hidden>
+        <div class="room-title">방 코드</div>
+        <div class="room-desc">받는 분에게 <b>이 코드</b>를 알려주세요. 코드 입력 후 내가 말하면 그 화면에 큰 글씨로 떠요.</div>
+        <div class="room-code" id="roomCode">····</div>
+        <div class="room-status" id="roomHostStatus">방을 여는 중…</div>
+        <button id="roomHostDone" class="inapp-primary" type="button">시작하기</button>
+        <button id="roomHostCancel" class="inapp-stay" type="button">방 닫기</button>
+      </div>
+      <!-- 참가자(받는 사람): 코드 입력 -->
+      <div id="roomJoinView" hidden>
+        <div class="room-title">코드 입력</div>
+        <div class="room-desc">말하는 분이 알려준 <b>코드</b>를 넣어 주세요.</div>
+        <input id="roomCodeInput" class="room-input" type="text" inputmode="latin" autocapitalize="characters" autocomplete="off" maxlength="4" placeholder="예: AB7K" aria-label="방 코드">
+        <div class="room-status" id="roomJoinStatus">&nbsp;</div>
+        <button id="roomJoinGo" class="inapp-primary" type="button">들어가기</button>
+        <button id="roomJoinBack" class="inapp-stay" type="button">뒤로</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 큰 화면 모드 나가기 -->
   <button id="exitBig" aria-label="큰 화면 끄기" title="큰 화면 끄기" type="button">
@@ -430,6 +488,7 @@
     if (!shown) {
       textEl.className = "placeholder";
       textEl.textContent = listening ? "듣고 있어요. 말씀해 주세요…" : PLACEHOLDER;
+      roomSend("");
       fitBig();
       return;
     }
@@ -441,6 +500,7 @@
     } else {
       textEl.textContent = solid;
     }
+    roomSend(shown);   // 함께 보기: 방장이면 받는 기기로 전송
     fitBig();
     // 길어지면 항상 끝(최근 말)이 보이도록
     textEl.scrollIntoView({ block: "end", behavior: "smooth" });
@@ -474,10 +534,121 @@
     render();
   }
   function leaveBig() {
+    if (room.role === "viewer") { roomLeave(); return; }   // 받는 기기는 큰 화면 = 방, 나가면 방도 종료
     body.classList.remove("bigscreen");
     textEl.style.fontSize = "";
     if (document.fullscreenElement && document.exitFullscreen) { try { document.exitFullscreen(); } catch (e) {} }
     render();
+  }
+
+  // ── 함께 보기(2대 연동, PeerJS P2P) ─────────────────────────
+  // 방장(말하는 사람)이 방을 만들면 코드가 생기고, 받는 사람이 코드를 넣어 연결.
+  // 방장의 인식 텍스트가 받는 기기에 실시간 전송되어 큰 글씨로 표시된다. (서버 불필요)
+  var room = { role: null, peer: null, conns: [], conn: null, code: null, last: "" };
+  var PEER_PREFIX = "ttbk-";
+  var CODE_CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";  // 헷갈리는 0,O,1,I 제외
+
+  function $(id) { return document.getElementById(id); }
+  function setStatusEl(el, msg, cls) { if (!el) return; el.textContent = msg; el.className = "room-status" + (cls ? " " + cls : ""); }
+  function genCode() { var s = ""; for (var i = 0; i < 4; i++) s += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]; return s; }
+
+  function loadPeerJS(cb) {
+    if (window.Peer) { cb(true); return; }
+    var s = document.createElement("script");
+    s.src = "https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js";
+    s.onload = function () { cb(!!window.Peer); };
+    s.onerror = function () { cb(false); };
+    document.head.appendChild(s);
+  }
+
+  function showRoomView(which) {
+    var ov = $("roomOv"); if (ov) ov.hidden = false;
+    $("roomHome").hidden = (which !== "home");
+    $("roomHostView").hidden = (which !== "host");
+    $("roomJoinView").hidden = (which !== "join");
+  }
+  function openRoom() { showRoomView(room.role === "host" ? "host" : "home"); }
+  function closeRoom() { var ov = $("roomOv"); if (ov) ov.hidden = true; }
+
+  function roomLeave() {
+    try { if (room.peer) room.peer.destroy(); } catch (e) {}
+    room = { role: null, peer: null, conns: [], conn: null, code: null, last: "" };
+    body.classList.remove("viewer");
+    if (body.classList.contains("bigscreen")) { body.classList.remove("bigscreen"); textEl.style.fontSize = ""; }
+    closeRoom();
+    render();
+  }
+
+  // 방장
+  function roomCreate() {
+    showRoomView("host");
+    $("roomCode").textContent = "····";
+    setStatusEl($("roomHostStatus"), "방을 여는 중…", "");
+    loadPeerJS(function (ok) {
+      if (!ok) { setStatusEl($("roomHostStatus"), "연결 기능을 못 불러왔어요. 인터넷을 확인해 주세요.", "err"); return; }
+      var code = genCode();
+      var peer = new window.Peer(PEER_PREFIX + code.toLowerCase(), { debug: 0 });
+      peer.on("open", function () {
+        room.role = "host"; room.peer = peer; room.code = code;
+        $("roomCode").textContent = code;
+        hostCountStatus();
+      });
+      peer.on("connection", function (conn) {
+        conn.on("open", function () { room.conns.push(conn); try { conn.send({ t: room.last }); } catch (e) {} hostCountStatus(); });
+        conn.on("close", function () { room.conns = room.conns.filter(function (c) { return c !== conn; }); hostCountStatus(); });
+        conn.on("error", function () {});
+      });
+      peer.on("error", function (e) {
+        var t = e && e.type;
+        setStatusEl($("roomHostStatus"), t === "unavailable-id" ? "코드가 겹쳤어요. 방을 다시 열어 주세요." : "연결에 문제가 생겼어요.", "err");
+      });
+    });
+  }
+  function hostCountStatus() {
+    var n = room.conns.length;
+    setStatusEl($("roomHostStatus"), n > 0 ? ("연결됨 · 받는 기기 " + n + "대") : "준비됐어요. 받는 분이 코드를 넣으면 연결돼요.", n > 0 ? "ok" : "");
+  }
+  function roomSend(text) {
+    if (room.role !== "host") return;
+    room.last = text || "";
+    for (var i = 0; i < room.conns.length; i++) { try { room.conns[i].send({ t: room.last }); } catch (e) {} }
+  }
+
+  // 참가자(받는 사람)
+  function roomJoin(code) {
+    code = (code || "").trim().toUpperCase();
+    if (code.length !== 4) { setStatusEl($("roomJoinStatus"), "코드 4자리를 넣어 주세요.", "err"); return; }
+    setStatusEl($("roomJoinStatus"), "연결 중…", "");
+    loadPeerJS(function (ok) {
+      if (!ok) { setStatusEl($("roomJoinStatus"), "연결 기능을 못 불러왔어요.", "err"); return; }
+      var peer = new window.Peer({ debug: 0 });
+      peer.on("open", function () {
+        var conn = peer.connect(PEER_PREFIX + code.toLowerCase(), { reliable: true });
+        var settled = false;
+        var timer = setTimeout(function () {
+          if (!settled) { setStatusEl($("roomJoinStatus"), "그 코드의 방을 못 찾았어요. 코드를 확인해 주세요.", "err"); try { peer.destroy(); } catch (e) {} }
+        }, 9000);
+        conn.on("open", function () {
+          settled = true; clearTimeout(timer);
+          room.role = "viewer"; room.peer = peer; room.conn = conn; room.code = code;
+          closeRoom(); startViewer();
+        });
+        conn.on("data", function (d) { if (d && typeof d.t === "string") viewerShow(d.t); });
+        conn.on("close", function () { viewerDisconnected(); });
+        conn.on("error", function () { if (!settled) setStatusEl($("roomJoinStatus"), "연결에 실패했어요. 다시 시도해 주세요.", "err"); });
+      });
+      peer.on("error", function () { if (!room.conn) setStatusEl($("roomJoinStatus"), "그 코드의 방을 못 찾았어요.", "err"); });
+    });
+  }
+  function startViewer() { body.classList.add("viewer"); body.classList.add("bigscreen"); viewerShow(""); }
+  function viewerShow(text) {
+    text = (text || "").trim();
+    if (!text) { textEl.className = "placeholder"; textEl.textContent = "연결됐어요. 상대가 말하면 큰 글씨로 보여요."; }
+    else { textEl.className = ""; textEl.textContent = text; }
+    fitBig();
+  }
+  function viewerDisconnected() {
+    if (room.role === "viewer") { textEl.className = "placeholder"; textEl.textContent = "연결이 끊어졌어요. (다시 들어가려면 ✕)"; fitBig(); }
   }
 
   function escapeHtml(s) {
@@ -811,6 +982,17 @@
   // 큰 화면 모드
   if (bigBtn) bigBtn.addEventListener("click", function () { isBig() ? leaveBig() : enterBig(); });
   if (exitBig) exitBig.addEventListener("click", leaveBig);
+
+  // 함께 보기 패널
+  if ($("roomBtn"))      $("roomBtn").addEventListener("click", openRoom);
+  if ($("roomHost"))     $("roomHost").addEventListener("click", roomCreate);
+  if ($("roomJoin"))     $("roomJoin").addEventListener("click", function () { showRoomView("join"); setTimeout(function(){ var i=$("roomCodeInput"); if(i) i.focus(); }, 50); });
+  if ($("roomClose"))    $("roomClose").addEventListener("click", closeRoom);
+  if ($("roomHostDone")) $("roomHostDone").addEventListener("click", closeRoom);
+  if ($("roomHostCancel"))$("roomHostCancel").addEventListener("click", roomLeave);
+  if ($("roomJoinBack")) $("roomJoinBack").addEventListener("click", function () { showRoomView("home"); });
+  if ($("roomJoinGo"))   $("roomJoinGo").addEventListener("click", function () { roomJoin($("roomCodeInput").value); });
+  if ($("roomCodeInput")) $("roomCodeInput").addEventListener("keydown", function (e) { if (e.key === "Enter") roomJoin(this.value); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && isBig()) leaveBig(); });
   // 회전·창 크기 변경 시 큰 글씨 다시 맞춤
   var fitT;
@@ -826,6 +1008,12 @@
   // 초기 렌더
   setMode(false);
   render();
+
+  // 공유 링크(?room=코드)로 들어오면 자동으로 입장 시도
+  (function () {
+    var m = (location.search || "").match(/[?&]room=([A-Za-z0-9]{4})/);
+    if (m) { var code = m[1].toUpperCase(); showRoomView("join"); var i = $("roomCodeInput"); if (i) i.value = code; roomJoin(code); }
+  })();
 })();
 </script>
 
