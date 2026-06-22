@@ -80,6 +80,15 @@
   body.listening header .brand .dot { background: var(--stop); animation: blink 1s steps(2, start) infinite; }
   @keyframes blink { 50% { opacity: .25; } }
 
+  /* 헤더 우측 컨트롤 */
+  .controls { display: flex; align-items: center; gap: 10px; }
+  .iconbtn {
+    width: 44px; height: 44px; border: 1px solid var(--line); background: #fff; color: var(--ink);
+    border-radius: 12px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  }
+  .iconbtn:active { background: var(--bg-press); }
+  .iconbtn .ico-svg { width: 22px; height: 22px; }
+
   /* 글씨 크기 조절 */
   .fontctl { display: flex; align-items: center; gap: 6px; }
   .fontctl button {
@@ -183,6 +192,31 @@
     background: var(--card); border-top: 1px solid var(--line); overflow: hidden; }
   #adSlot[hidden] { display: none; }
 
+  /* ── 큰 화면(디스플레이) 모드 ── TV 미러링·원거리용 초대형 글씨, 다크 배경으로 대비 최대화 */
+  body.bigscreen { background: #0e1116; }
+  body.bigscreen header { display: none; }
+  body.bigscreen #adSlot { display: none !important; }
+  body.bigscreen main { padding: 28px 30px 8px; }
+  body.bigscreen .status { display: none; }
+  body.bigscreen #text { color: #ffffff; font-weight: 800; max-width: none; }
+  body.bigscreen #text.placeholder { color: #8a92a0; font-weight: 700; }
+  body.bigscreen #text .interim { color: #9aa3b0; }
+  body.bigscreen footer { background: #0e1116; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); }
+  body.bigscreen #mainBtn { min-height: 66px; font-size: 20px; border-radius: 16px; gap: 10px; }
+  body.bigscreen #mainBtn .ico { font-size: 24px; }
+  body.bigscreen .sub button { color: #9aa3b0; }
+
+  /* 큰 화면 나가기 버튼 (큰 화면일 때만 노출) */
+  #exitBig {
+    display: none; position: fixed; z-index: 60;
+    top: calc(10px + env(safe-area-inset-top)); right: calc(12px + env(safe-area-inset-right));
+    width: 46px; height: 46px; border-radius: 12px; border: none; cursor: pointer;
+    background: rgba(255,255,255,.14); color: #fff; align-items: center; justify-content: center;
+  }
+  #exitBig:active { background: rgba(255,255,255,.26); }
+  #exitBig .ico-svg { width: 26px; height: 26px; }
+  body.bigscreen #exitBig { display: inline-flex; }
+
   @media (min-width: 700px) {
     :root { --fs: 52px; }
     header .brand { font-size: 20px; }
@@ -204,10 +238,15 @@
 
   <header>
     <div class="brand"><span class="dot" aria-hidden="true"></span>또박또박</div>
-    <div class="fontctl" role="group" aria-label="글씨 크기 조절">
-      <span class="lbl">글씨</span>
-      <button id="fontDown" aria-label="글씨 작게" type="button">가&minus;</button>
-      <button id="fontUp" aria-label="글씨 크게" type="button">가&plus;</button>
+    <div class="controls">
+      <button id="bigBtn" class="iconbtn" aria-label="큰 화면으로 보기" title="큰 화면" type="button">
+        <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+      </button>
+      <div class="fontctl" role="group" aria-label="글씨 크기 조절">
+        <span class="lbl">글씨</span>
+        <button id="fontDown" aria-label="글씨 작게" type="button">가&minus;</button>
+        <button id="fontUp" aria-label="글씨 크게" type="button">가&plus;</button>
+      </div>
     </div>
   </header>
 
@@ -229,6 +268,11 @@
     </div>
   </footer>
 
+  <!-- 큰 화면 모드 나가기 -->
+  <button id="exitBig" aria-label="큰 화면 끄기" title="큰 화면 끄기" type="button">
+    <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+
   <!-- 하단 광고 자리: AdSense 게시자 ID를 넣기 전엔 숨김 상태 -->
   <aside id="adSlot" hidden aria-label="광고"></aside>
 
@@ -247,6 +291,9 @@
   var noticeEl = document.getElementById("notice");
   var fontUp   = document.getElementById("fontUp");
   var fontDown = document.getElementById("fontDown");
+  var bigBtn   = document.getElementById("bigBtn");
+  var exitBig  = document.getElementById("exitBig");
+  var screenEl = document.getElementById("screen");
 
   var PLACEHOLDER = "아래 파란 버튼을 누르고 또박또박 말씀해 주세요.";
 
@@ -383,6 +430,7 @@
     if (!shown) {
       textEl.className = "placeholder";
       textEl.textContent = listening ? "듣고 있어요. 말씀해 주세요…" : PLACEHOLDER;
+      fitBig();
       return;
     }
     textEl.className = "";
@@ -393,8 +441,43 @@
     } else {
       textEl.textContent = solid;
     }
+    fitBig();
     // 길어지면 항상 끝(최근 말)이 보이도록
     textEl.scrollIntoView({ block: "end", behavior: "smooth" });
+  }
+
+  // ── 큰 화면(디스플레이) 모드 ──
+  function isBig() { return body.classList.contains("bigscreen"); }
+
+  // 큰 화면일 때, 글자가 화면을 꽉 채우도록 글씨 크기를 자동으로 키운다(이진 탐색).
+  function fitBig() {
+    if (!isBig()) { textEl.style.fontSize = ""; return; }
+    // #screen은 글자 따라 늘어나므로, 고정된 <main> 콘텐츠 영역을 기준으로 측정한다.
+    var mainEl = screenEl.parentNode, cs = getComputedStyle(mainEl);
+    var availW = mainEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    var availH = mainEl.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    var lo = 28, hi = 360, best = lo;
+    for (var i = 0; i < 14; i++) {
+      var mid = (lo + hi) / 2;
+      textEl.style.fontSize = mid + "px";
+      if (textEl.scrollWidth <= availW && textEl.scrollHeight <= availH) {
+        best = mid; lo = mid;
+      } else { hi = mid; }
+    }
+    textEl.style.fontSize = best + "px";
+  }
+
+  function enterBig() {
+    body.classList.add("bigscreen");
+    var el = document.documentElement;
+    if (el.requestFullscreen) { try { el.requestFullscreen(); } catch (e) {} }
+    render();
+  }
+  function leaveBig() {
+    body.classList.remove("bigscreen");
+    textEl.style.fontSize = "";
+    if (document.fullscreenElement && document.exitFullscreen) { try { document.exitFullscreen(); } catch (e) {} }
+    render();
   }
 
   function escapeHtml(s) {
@@ -724,6 +807,16 @@
     start();
   });
   clearBtn.addEventListener("click", clearScreen);
+
+  // 큰 화면 모드
+  if (bigBtn) bigBtn.addEventListener("click", function () { isBig() ? leaveBig() : enterBig(); });
+  if (exitBig) exitBig.addEventListener("click", leaveBig);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && isBig()) leaveBig(); });
+  // 회전·창 크기 변경 시 큰 글씨 다시 맞춤
+  var fitT;
+  window.addEventListener("resize", function () { if (isBig()) { clearTimeout(fitT); fitT = setTimeout(fitBig, 120); } });
+  // 브라우저 전체화면을 사용자가 빠져나오면 큰 화면 모드도 함께 해제
+  document.addEventListener("fullscreenchange", function () { if (!document.fullscreenElement && isBig()) leaveBig(); });
 
   // 듣는 중 화면이 꺼지거나 탭을 벗어나면 안전하게 마무리
   document.addEventListener("visibilitychange", function () {
