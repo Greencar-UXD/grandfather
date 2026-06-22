@@ -1,0 +1,11 @@
+{
+  "appId": "kr.ttobak.app",
+  "appName": "또박또박",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "always"
+  },
+  "plugins": {
+    "SpeechRecognition": {}
+  }
+}

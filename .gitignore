@@ -1,0 +1,7 @@
+# 네이티브 앱(Capacitor) 빌드 산출물 — 저장소엔 안 올림 (각자 Mac에서 생성)
+node_modules/
+www/
+ios/
+android/
+.DS_Store
+npm-debug.log*

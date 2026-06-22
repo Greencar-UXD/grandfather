@@ -312,8 +312,65 @@
   fontUp.addEventListener("click", function () { fs = applyFs(fs + FS_STEP); });
   fontDown.addEventListener("click", function () { fs = applyFs(fs - FS_STEP); });
 
+  // ── 네이티브 앱(Capacitor) 여부 ──
+  // iOS/안드로이드 네이티브 앱의 WebView는 Web Speech API가 동작하지 않으므로,
+  // 네이티브일 땐 @capacitor-community/speech-recognition(네이티브 음성인식)을
+  // Web Speech API와 같은 모양으로 감싼 어댑터를 쓴다. (웹/PWA/TWA는 기존 Web Speech 그대로)
+  var isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+
+  // Web Speech API 인터페이스를 흉내 내는 네이티브 어댑터.
+  // 기존 코드(onresult/onend/onerror, start/stop)를 그대로 재사용하기 위함.
+  // ※ v1: 부분결과(partialResults)를 interim으로 흘리고, stop 시 finishUp이 확정 처리.
+  //    실제 단말에서 세그먼트 동작을 보고 미세조정 예정.
+  function NativeSR() {
+    this.lang = "ko-KR"; this.continuous = true; this.interimResults = true;
+    this.onresult = null; this.onerror = null; this.onend = null; this.onstart = null;
+    this._active = false; this._listeners = [];
+  }
+  NativeSR.prototype._plugin = function () {
+    return (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.SpeechRecognition) || null;
+  };
+  NativeSR.prototype._emit = function (text, isFinal) {
+    if (!this.onresult) return;
+    var res = { 0: { transcript: text || "" }, isFinal: !!isFinal, length: 1 };
+    this.onresult({ results: { 0: res, length: 1 }, resultIndex: 0 });
+  };
+  NativeSR.prototype.start = function () {
+    var self = this, SP = self._plugin();
+    if (!SP) { if (self.onerror) self.onerror({ error: "service-not-allowed" }); return; }
+    self._active = true;
+    SP.requestPermissions().then(function () {
+      return SP.addListener("partialResults", function (data) {
+        var m = (data && data.matches && data.matches[0]) || "";
+        self._emit(m, false);
+      });
+    }).then(function (h) {
+      if (h) self._listeners.push(h);
+      if (self.onstart) self.onstart();
+      return SP.start({ language: self.lang, partialResults: true, popup: false });
+    }).then(function (result) {
+      // 일부 플랫폼은 start()가 최종 결과로 resolve됨 → 확정 처리
+      if (result && result.matches && result.matches[0]) self._emit(result.matches[0], true);
+      if (self._active) { self._active = false; if (self.onend) self.onend(); }
+    }).catch(function (e) {
+      var name = (e && (e.message || e.error || "")) + "";
+      if (self.onerror) self.onerror({ error: /denied|not allowed|permission/i.test(name) ? "not-allowed" : "audio-capture" });
+    });
+  };
+  NativeSR.prototype.stop = function () {
+    var self = this; self._active = false;
+    var SP = self._plugin();
+    var done = function () {
+      self._listeners.forEach(function (h) { try { h.remove(); } catch (e) {} });
+      self._listeners = [];
+      if (self.onend) self.onend();
+    };
+    if (SP && SP.stop) { SP.stop().then(done, done); } else { done(); }
+  };
+  NativeSR.prototype.abort = NativeSR.prototype.stop;
+
   // ── 음성인식 지원 확인 ──
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var SR = isNative ? NativeSR : (window.SpeechRecognition || window.webkitSpeechRecognition);
   if (!SR) {
     showNotice(
       "<b>이 브라우저는 음성 인식을 지원하지 않아요.</b><br>" +
@@ -619,6 +676,7 @@
   // 안드로이드 등에서 recognition.start()가 반복될 때마다 마이크 허용창이 다시 뜨는 걸 막기 위해
   // getUserMedia로 '지속 허용'을 한 번 확보해 둔다. (권한만 받고 스트림은 곧바로 닫는다)
   function ensureMic(cb) {
+    if (isNative) { cb(true); return; }   // 네이티브: 음성 플러그인이 권한을 직접 처리
     if (micReady) { cb(true); return; }
     var md = navigator.mediaDevices;
     if (!md || !md.getUserMedia) { cb(true); return; } // 못 쓰면 그냥 인식 시도
