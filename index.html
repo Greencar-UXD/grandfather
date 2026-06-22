@@ -26,6 +26,13 @@
 
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230b66ff'/><rect x='18' y='26' width='64' height='44' rx='12' fill='%23ffffff'/><path d='M34 66 L34 84 L52 66 Z' fill='%23ffffff'/></svg>">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+
+<!-- PWA: 설치형 앱 (홈 화면에 추가) -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="또박또박">
 <style>
   :root {
     --bg: #f4f6f9;
@@ -166,6 +173,13 @@
   .inapp-stay { margin-top: 16px; font: inherit; font-size: 15px; color: var(--ink-3);
     background: none; border: none; text-decoration: underline; cursor: pointer; }
 
+  /* ── 하단 광고 자리 (AdSense) ── 메인 읽기 화면은 건드리지 않고 맨 아래에만.
+     광고 ID가 설정되기 전에는 #adSlot이 hidden이라 화면에 전혀 안 보인다. */
+  #adSlot { flex: 0 0 auto; display: flex; justify-content: center; align-items: center;
+    min-height: 50px; padding: 4px 0 calc(4px + env(safe-area-inset-bottom));
+    background: var(--card); border-top: 1px solid var(--line); overflow: hidden; }
+  #adSlot[hidden] { display: none; }
+
   @media (min-width: 700px) {
     :root { --fs: 52px; }
     header .brand { font-size: 20px; }
@@ -211,6 +225,9 @@
       <button id="clearBtn" type="button" hidden><svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 21-4-4a2 2 0 0 1 0-3l9-9a2 2 0 0 1 3 0l4 4a2 2 0 0 1 0 3l-7 7"/><path d="M21 21H8"/><path d="m5 11 6 6"/></svg><span>화면 지우기</span></button>
     </div>
   </footer>
+
+  <!-- 하단 광고 자리: AdSense 게시자 ID를 넣기 전엔 숨김 상태 -->
+  <aside id="adSlot" hidden aria-label="광고"></aside>
 
 <script>
 (function () {
@@ -713,6 +730,41 @@
   // 초기 렌더
   setMode(false);
   render();
+})();
+</script>
+
+<script>
+// ── PWA 서비스워커 등록 (오프라인 + 설치 가능) ──
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  });
+}
+
+// ── 하단 광고(AdSense) ──
+// AdSense 승인 후 아래 두 값만 채우면 자동으로 켜진다. 비어 있으면 광고 자리는 숨김 유지.
+(function () {
+  var ADSENSE_CLIENT = "";   // 예: "ca-pub-XXXXXXXXXXXXXXXX"
+  var ADSENSE_SLOT   = "";   // 예: "1234567890"
+  if (!ADSENSE_CLIENT || !ADSENSE_SLOT) return;   // 미설정 → 광고 자리 숨김
+  var slot = document.getElementById("adSlot");
+  if (!slot) return;
+  var s = document.createElement("script");
+  s.async = true;
+  s.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" + ADSENSE_CLIENT;
+  s.crossOrigin = "anonymous";
+  document.head.appendChild(s);
+  var ins = document.createElement("ins");
+  ins.className = "adsbygoogle";
+  ins.style.display = "block";
+  ins.style.width = "100%";
+  ins.setAttribute("data-ad-client", ADSENSE_CLIENT);
+  ins.setAttribute("data-ad-slot", ADSENSE_SLOT);
+  ins.setAttribute("data-ad-format", "auto");
+  ins.setAttribute("data-full-width-responsive", "true");
+  slot.appendChild(ins);
+  slot.hidden = false;
+  try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
 })();
 </script>
 </body>
