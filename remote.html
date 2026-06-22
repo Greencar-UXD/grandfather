@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>음성 리모컨 (프로토타입) — 또박또박</title>
+<style>
+  :root {
+    --bg: #f4f6f9; --bg-press: #e9edf3; --ink: #11151c; --ink-2: #5a626e; --ink-3: #8a92a0;
+    --card: #fff; --line: #e3e7ee; --brand: #0b66ff; --brand-press: #0a52cc; --ok: #1f8a4c;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+    display: flex; flex-direction: column; }
+  header { padding: 14px 18px calc(14px + env(safe-area-inset-top)); display: flex; align-items: center; gap: 10px; }
+  .brand { font-weight: 900; font-size: 19px; }
+  .brand .dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; background: var(--brand); margin-right: 7px; vertical-align: middle; }
+  .tag { font-size: 13px; font-weight: 700; color: var(--brand); background: #eaf1ff; padding: 4px 10px; border-radius: 999px; }
+
+  .note { margin: 0 16px 12px; font-size: 14px; line-height: 1.5; color: var(--ink-2); background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+  .note b { color: var(--brand); }
+
+  /* 인식 결과 표시 */
+  .screen { margin: 0 16px 14px; background: #fff; border: 1px solid var(--line); border-radius: 20px;
+    padding: 22px; text-align: center; min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .screen .icon { font-size: 56px; line-height: 1; }
+  .screen .label { font-size: 32px; font-weight: 900; margin-top: 8px; }
+  .screen .detail { font-size: 17px; font-weight: 600; color: var(--ink-2); margin-top: 6px; }
+  .screen .heard { font-size: 15px; color: var(--ink-3); margin-top: 12px; }
+  .screen.idle .label { color: var(--ink-3); font-weight: 800; }
+  .screen.unknown .label { color: #c12b2b; }
+  .screen.ok { border-color: #bfe3cc; background: #f3fbf6; }
+
+  /* 음성 버튼 */
+  .mic { margin: 0 16px 16px; }
+  .mic button { width: 100%; min-height: 96px; border: none; border-radius: 22px; background: var(--brand); color: #fff;
+    font-size: 24px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; }
+  .mic button:active { background: var(--brand-press); }
+  .mic button.live { background: var(--ok); }
+  .mic .micico { font-size: 28px; }
+
+  /* 큰 버튼 그리드 */
+  .pad { margin: 0 16px calc(20px + env(safe-area-inset-bottom)); display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .pad button { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 16px 6px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 17px; font-weight: 800; color: var(--ink); }
+  .pad button:active { background: var(--bg-press); }
+  .pad button .bico { font-size: 30px; }
+  .pad button.power { color: #c12b2b; }
+  .pad button.wide { grid-column: span 3; flex-direction: row; justify-content: center; gap: 10px; }
+
+  footer { margin-top: auto; padding: 0 16px calc(16px + env(safe-area-inset-bottom)); text-align: center; }
+  footer a { color: var(--ink-3); font-size: 14px; text-decoration: none; }
+
+  @media (min-width: 560px) { .screen, .note, .mic, .pad { max-width: 520px; margin-left: auto; margin-right: auto; } }
+</style>
+</head>
+<body>
+  <header>
+    <span class="brand"><span class="dot"></span>음성 리모컨</span>
+    <span class="tag">프로토타입</span>
+  </header>
+
+  <div class="note">
+    말로 TV를 조작하는 <b>음성 리모컨</b> 시제품이에요. 지금은 <b>말을 알아듣고 명령으로 바꾸는 것</b>까지 보여줘요.
+    실제 TV 연결(전원·채널)은 다음 단계입니다.
+  </div>
+
+  <div class="screen idle" id="screen">
+    <div class="icon" id="scIcon">🎙️</div>
+    <div class="label" id="scLabel">버튼을 누르고 말해보세요</div>
+    <div class="detail" id="scDetail">예: “소리 키워줘”, “다음 채널”, “유튜브 틀어줘”</div>
+    <div class="heard" id="scHeard"></div>
+  </div>
+
+  <div class="mic">
+    <button id="micBtn" type="button"><span class="micico">🎤</span><span id="micText">눌러서 말하기</span></button>
+  </div>
+
+  <div class="pad">
+    <button class="power" data-cmd="POWER" type="button"><span class="bico">⏻</span>전원</button>
+    <button data-cmd="CH_UP" type="button"><span class="bico">📺</span>채널 +</button>
+    <button data-cmd="VOL_UP" type="button"><span class="bico">🔊</span>소리 +</button>
+    <button data-cmd="MUTE" type="button"><span class="bico">🔇</span>음소거</button>
+    <button data-cmd="CH_DOWN" type="button"><span class="bico">📺</span>채널 −</button>
+    <button data-cmd="VOL_DOWN" type="button"><span class="bico">🔉</span>소리 −</button>
+    <button class="wide" data-cmd="HOME" type="button"><span class="bico">🏠</span>홈 / 앱 목록</button>
+  </div>
+
+  <footer><a href="./">← 또박또박으로</a></footer>
+
+<script>
+(function () {
+  "use strict";
+
+  // ── 한국어 음성 명령 → 의도(intent) 파서 ──
+  // TV 연결 전이라 실제 동작 대신 인식된 명령을 표시(mock). Phase 1에서 이 의도를 TV 제어로 연결.
+  function A(label, icon, detail, kind) { return { label: label, icon: icon, detail: detail, kind: kind || "ok" }; }
+  function parseIntent(raw) {
+    var s = (raw || "").replace(/\s+/g, "");
+    if (!s) return null;
+    var num = (s.match(/(\d+)\s*번/) || s.match(/(\d+)/) || [])[1];
+    // 1) 음소거 (전원 '꺼'와 겹치지 않게 먼저)
+    if (/(음소거|무음|소리꺼|소리끄|조용)/.test(s)) return A("음소거", "🔇", "소리를 끕니다");
+    // 2) 음량
+    if (/(소리|음량|볼륨)/.test(s) && /(키|높|올|크)/.test(s)) return A("소리 키우기", "🔊", "음량을 올립니다");
+    if (/(소리|음량|볼륨)/.test(s) && /(줄|낮|내|작)/.test(s)) return A("소리 줄이기", "🔉", "음량을 내립니다");
+    // 3) 채널
+    if (num && /(채널|번)/.test(s)) return A(num + "번", "📺", num + "번 채널로 이동");
+    if (/채널/.test(s) && /(다음|올|위|넘|다음거)/.test(s)) return A("다음 채널", "📺", "채널을 올립니다");
+    if (/채널/.test(s) && /(이전|내|아래|뒤|전거)/.test(s)) return A("이전 채널", "📺", "채널을 내립니다");
+    // 4) 앱/콘텐츠
+    if (/유튜브|유투브/.test(s)) return A("유튜브", "▶️", "유튜브를 엽니다");
+    if (/넷플릭스|넷플/.test(s)) return A("넷플릭스", "▶️", "넷플릭스를 엽니다");
+    if (/뉴스/.test(s)) return A("뉴스", "📰", "뉴스를 켭니다");
+    if (/노래방|노래/.test(s)) return A("노래방", "🎤", "노래방을 켭니다");
+    // 5) 채널만 언급
+    if (/채널/.test(s)) return A("다음 채널", "📺", "채널을 올립니다");
+    // 6) 전원 (소리/채널 아닌 경우)
+    if (/(켜)/.test(s)) return A("전원 켜기", "⏻", "TV를 켭니다");
+    if (/(꺼|끄)/.test(s)) return A("전원 끄기", "⏻", "TV를 끕니다");
+    // 못 알아들음
+    return A("잘 못 들었어요", "❓", "다시 한 번 말씀해 주세요", "unknown");
+  }
+  window.__parseIntent = parseIntent; // 테스트용
+
+  // 버튼(물리) → 의도 매핑
+  var BTN = {
+    POWER: A("전원", "⏻", "TV 전원"),
+    CH_UP: A("다음 채널", "📺", "채널을 올립니다"),
+    CH_DOWN: A("이전 채널", "📺", "채널을 내립니다"),
+    VOL_UP: A("소리 키우기", "🔊", "음량을 올립니다"),
+    VOL_DOWN: A("소리 줄이기", "🔉", "음량을 내립니다"),
+    MUTE: A("음소거", "🔇", "소리를 끕니다"),
+    HOME: A("홈 / 앱 목록", "🏠", "홈 화면을 엽니다")
+  };
+
+  var screen = document.getElementById("screen");
+  var scIcon = document.getElementById("scIcon"), scLabel = document.getElementById("scLabel");
+  var scDetail = document.getElementById("scDetail"), scHeard = document.getElementById("scHeard");
+
+  function showAction(act, heard) {
+    if (!act) return;
+    screen.className = "screen " + (act.kind === "unknown" ? "unknown" : "ok");
+    scIcon.textContent = act.icon;
+    scLabel.textContent = act.label;
+    scDetail.textContent = act.detail;
+    scHeard.textContent = heard ? ("들은 말: “" + heard + "”") : "";
+  }
+
+  // 물리 버튼
+  var pads = document.querySelectorAll(".pad button");
+  for (var i = 0; i < pads.length; i++) {
+    pads[i].addEventListener("click", function () { showAction(BTN[this.getAttribute("data-cmd")], ""); });
+  }
+
+  // ── 음성 인식 ──
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var micBtn = document.getElementById("micBtn"), micText = document.getElementById("micText");
+  var rec = null, listening = false;
+
+  if (!SR) {
+    micBtn.disabled = true;
+    micText.textContent = "이 브라우저는 음성 인식을 지원하지 않아요";
+  } else {
+    micBtn.addEventListener("click", function () { listening ? stop() : start(); });
+  }
+
+  function start() {
+    rec = new SR();
+    rec.lang = "ko-KR";
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
+    var finalText = "";
+    rec.onstart = function () { listening = true; micBtn.classList.add("live"); micText.textContent = "듣고 있어요… (다시 누르면 끝)"; };
+    rec.onresult = function (e) {
+      var interim = "";
+      for (var k = e.resultIndex; k < e.results.length; k++) {
+        var r = e.results[k];
+        if (r.isFinal) finalText += r[0].transcript; else interim += r[0].transcript;
+      }
+      var heard = (finalText + interim).trim();
+      if (heard) { scHeard.textContent = "들은 말: “" + heard + "”"; }
+    };
+    rec.onerror = function () {};
+    rec.onend = function () {
+      listening = false; micBtn.classList.remove("live"); micText.textContent = "눌러서 말하기";
+      var heard = finalText.trim();
+      if (heard) showAction(parseIntent(heard), heard);
+    };
+    try { rec.start(); } catch (e) {}
+  }
+  function stop() { if (rec) { try { rec.stop(); } catch (e) {} } }
+})();
+</script>
+</body>
+</html>
