@@ -1,0 +1,21 @@
+{
+  "name": "ttobak",
+  "version": "1.0.0",
+  "private": true,
+  "description": "또박또박 — 말하면 글자로 (네이티브 앱 래퍼)",
+  "scripts": {
+    "build:www": "node scripts/build-native-www.mjs",
+    "sync": "npm run build:www && cap sync",
+    "ios": "npm run sync && cap open ios",
+    "android": "npm run sync && cap open android"
+  },
+  "dependencies": {
+    "@capacitor/core": "7.6.7",
+    "@capacitor/ios": "7.6.7",
+    "@capacitor/android": "7.6.7",
+    "@capacitor-community/speech-recognition": "7.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "7.6.7"
+  }
+}
