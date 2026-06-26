@@ -74,7 +74,7 @@
   .screen.idle .cmd { font-size:clamp(22px,6vw,28px); color:var(--text-secondary); font-weight:var(--fw-semibold); }
   .screen.unknown .cmd { color:var(--danger-600); }
   .detail { font-size:18px; font-weight:var(--fw-medium); color:var(--text-secondary); }
-  .heard { font-size:15px; color:var(--text-tertiary); }
+  .heard { font-size:15px; color:var(--text-secondary); }   /* 대비 ↑ (들은 말 가독성) */
   .heard:empty { display:none; }
   .sentband { display:none; align-items:center; justify-content:center; gap:7px; margin-top:2px;
     color:var(--success-600); font-weight:var(--fw-bold); font-size:16px; }
@@ -117,7 +117,7 @@
   .tvhead .ttl { display:flex; align-items:center; gap:8px; }
   .tvhead svg { width:20px; height:20px; color:var(--text-secondary); }
   .beta { font-size:11px; font-weight:var(--fw-semibold); letter-spacing:.02em; color:var(--text-secondary); background:var(--surface-sunken); border-radius:var(--radius-pill); padding:2px 9px; }
-  .tvstate { font-size:13px; font-weight:var(--fw-semibold); color:var(--text-tertiary); }
+  .tvstate { font-size:13px; font-weight:var(--fw-semibold); color:var(--text-secondary); }
   .tvstate.ok { color:var(--success-600); } .tvstate.err { color:var(--danger-600); }
   .tvbody { padding:16px 18px 18px; border-top:1px solid var(--border); }
   .tvhelp { font-size:14px; line-height:1.55; color:var(--text-secondary); margin:0 0 14px; }
@@ -138,6 +138,7 @@
   footer a { color:var(--text-secondary); font-size:15px; font-weight:var(--fw-medium); text-decoration:none; }
   footer a:hover { color:var(--text-primary); }
 
+  button, a, input { touch-action: manipulation; }   /* 탭 300ms 지연 제거(핀치 줌 유지) */
   :focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; border-radius:6px; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -158,7 +159,7 @@
 
   <div class="wrap">
     <!-- 인식 결과 카드 -->
-    <div class="screen idle" id="screen">
+    <div class="screen idle" id="screen" aria-live="polite" aria-atomic="true">
       <span class="chip" id="scIcon">명령</span>
       <div class="cmd" id="scLabel">버튼을 누르고 말해보세요</div>
       <div class="detail" id="scDetail">예: “소리 키워줘”, “다음 채널”, “유튜브 틀어줘”</div>
