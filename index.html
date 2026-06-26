@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#0b66ff">
+<meta name="theme-color" content="#2d5bff">
 <title>또박또박 — 말하면 글자로</title>
 <meta name="description" content="말하면 큰 글씨로 보여 드려요. 귀가 어두우신 분과의 대화를 돕는 음성→글자 화면.">
 
@@ -24,7 +24,7 @@
 <meta name="twitter:description" content="귀가 어두우신 분과의 대화를 돕는 음성→글자 화면.">
 <meta name="twitter:image" content="https://ttobak.kr/og.png?v=2">
 
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230b66ff'/><rect x='18' y='26' width='64' height='44' rx='12' fill='%23ffffff'/><path d='M34 66 L34 84 L52 66 Z' fill='%23ffffff'/></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%232d5bff'/><rect x='18' y='26' width='64' height='44' rx='12' fill='%23ffffff'/><path d='M34 66 L34 84 L52 66 Z' fill='%23ffffff'/></svg>">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 
 <!-- PWA: 설치형 앱 (홈 화면에 추가) -->
@@ -38,24 +38,30 @@
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9698185701097900" crossorigin="anonymous"></script>
 <style>
   :root {
-    --bg: #f4f6f9;
-    --bg-press: #e9edf3;   /* 버튼 눌렀을 때 옅은 회색 */
-    --ink: #11151c;        /* 본문 글씨 (최대 대비) */
-    --ink-2: #5a626e;      /* 보조 텍스트 */
-    --ink-3: #8a92a0;      /* 가장 약한 보조 텍스트 */
-    --card: #ffffff;
-    --line: #e3e7ee;
-    --brand: #0b66ff;      /* 듣기 시작 (파랑) */
-    --brand-press: #0a52cc;/* 파란 버튼 누름 */
-    --stop: #e23b3b;       /* 말 끝 (빨강) */
-    --stop-press: #c12b2b; /* 빨간 버튼 누름 */
-    --ok: #1f8a4c;         /* 완료(초록) */
-    --disabled: #aeb6c2;   /* 비활성 버튼 */
+    /* Greencar Cobalt(Mono) 디자인 시스템 토큰 (design-system tokens/*.css) */
+    --gray-0:#ffffff; --gray-50:#f7f8f9; --gray-100:#eceef1; --gray-200:#dde0e5;
+    --gray-300:#c5cad1; --gray-400:#9aa1ab; --gray-600:#4d535d; --gray-900:#14171b;
+    --cobalt-500:#2d5bff; --cobalt-600:#2447e0;
+    --success-600:#0c8a54; --danger-500:#e0433a; --danger-600:#c5352d;
+
+    --bg: var(--gray-50);
+    --bg-press: var(--gray-100);  /* 버튼 눌렀을 때 옅은 회색 */
+    --ink: var(--gray-900);       /* 본문 글씨 (최대 대비) */
+    --ink-2: var(--gray-600);     /* 보조 텍스트 */
+    --ink-3: var(--gray-400);     /* 가장 약한 보조 텍스트 */
+    --card: var(--gray-0);
+    --line: var(--gray-200);
+    --brand: var(--cobalt-500);   /* 코발트 — 가장 중요한 CTA(말하기)·포커스 */
+    --brand-press: var(--cobalt-600);
+    --stop: var(--danger-500);    /* 듣는 중/끝내기 (빨강) */
+    --stop-press: var(--danger-600);
+    --ok: var(--success-600);     /* 완료(초록) */
+    --disabled: var(--gray-300);  /* 비활성 버튼 */
     /* 오류 안내 박스 색 */
-    --danger-bg: #fff5f5;
-    --danger-line: #f4c9c9;
-    --danger-ink: #9a2727;
-    --danger-ink-strong: #7e1d1d;
+    --danger-bg: #fbe9e8;
+    --danger-line: #f3c9c6;
+    --danger-ink: #c5352d;
+    --danger-ink-strong: #a52822;
     --fs: 40px;            /* 읽기 영역 기본 글씨 크기 (조절됨) */
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -124,16 +130,16 @@
   /* ── 하단 큰 버튼 ── */
   footer { flex: 0 0 auto; padding: 14px 18px calc(18px + env(safe-area-inset-bottom)); }
   #mainBtn {
-    width: 100%; min-height: 92px; border: none; border-radius: 22px;
+    width: 100%; min-height: 92px; border: none; border-radius: 18px;
     font-family: inherit; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;
     color: #fff; background: var(--brand); cursor: pointer;
     display: flex; align-items: center; justify-content: center; gap: 12px;
-    box-shadow: 0 6px 20px rgba(11,102,255,.28); transition: transform .06s, background .15s;
+    box-shadow: 0 8px 20px -8px rgba(45,91,255,.5); transition: transform .06s, background .15s;
   }
   #mainBtn .ico { font-size: 30px; line-height: 1; display: inline-flex; }
   .ico-svg { width: 1em; height: 1em; display: inline-block; vertical-align: -0.14em; flex: none; }
   #mainBtn:active { transform: scale(.985); background: var(--brand-press); }
-  body.listening #mainBtn { background: var(--stop); box-shadow: 0 6px 20px rgba(226,59,59,.32); }
+  body.listening #mainBtn { background: var(--stop); box-shadow: 0 8px 20px -8px rgba(224,67,58,.55); }
   body.listening #mainBtn:active { background: var(--stop-press); }
   #mainBtn:disabled { background: var(--disabled); box-shadow: none; cursor: default; }
 
