@@ -198,19 +198,19 @@
     background: var(--card); border-top: 1px solid var(--line); overflow: hidden; }
   #adSlot[hidden] { display: none; }
 
-  /* ── 큰 화면(디스플레이) 모드 ── TV 미러링·원거리용 초대형 글씨, 다크 배경으로 대비 최대화 */
-  body.bigscreen { background: #0e1116; }
+  /* ── 큰 화면(디스플레이) 모드 ── TV 미러링·원거리용 초대형 글씨, DS 다크 토큰으로 대비 최대화 */
+  body.bigscreen { background: #0d0f12; }   /* DS dark surface-page */
   body.bigscreen header { display: none; }
   body.bigscreen #adSlot { display: none !important; }
   body.bigscreen main { padding: 28px 30px 8px; }
   body.bigscreen .status { display: none; }
-  body.bigscreen #text { color: #ffffff; font-weight: 800; max-width: none; }
-  body.bigscreen #text.placeholder { color: #8a92a0; font-weight: 700; }
-  body.bigscreen #text .interim { color: #9aa3b0; }
-  body.bigscreen footer { background: #0e1116; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); }
+  body.bigscreen #text { color: #f3f4f6; font-weight: 800; max-width: none; }   /* DS dark text-primary */
+  body.bigscreen #text.placeholder { color: #9aa1ab; font-weight: 700; }        /* DS dark text-secondary */
+  body.bigscreen #text .interim { color: #6b727d; }                              /* DS dark text-tertiary */
+  body.bigscreen footer { background: #0d0f12; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); }
   body.bigscreen #mainBtn { min-height: 66px; font-size: 20px; border-radius: 16px; gap: 10px; }
   body.bigscreen #mainBtn .ico { font-size: 24px; }
-  body.bigscreen .sub button { color: #9aa3b0; }
+  body.bigscreen .sub button { color: #9aa1ab; }
 
   /* 큰 화면 나가기 버튼 (큰 화면일 때만 노출) */
   #exitBig {
@@ -245,6 +245,18 @@
   /* 받는 기기(참가자)는 마이크/컨트롤 숨김 — 보기 전용 */
   body.viewer footer, body.viewer header .controls { display: none; }
   body.viewer #exitBig { display: inline-flex; }
+
+  /* 접근성(Cobalt DS 품질 기준): 키보드 포커스 표시 + 모션 최소화 */
+  button:focus-visible, input:focus-visible, a:focus-visible {
+    outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 8px;
+  }
+  #mainBtn:focus-visible { outline-color: var(--ink); }
+  @media (prefers-reduced-motion: reduce) {
+    body.listening header .brand .dot { animation: none; }
+    .pulse i, .pulse.live i { animation: none; }
+    #mainBtn { transition: none; }
+    #mainBtn:active { transform: none; }
+  }
 
   @media (min-width: 700px) {
     :root { --fs: 52px; }
