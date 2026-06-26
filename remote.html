@@ -3,127 +3,218 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>음성 리모컨 (프로토타입) — 또박또박</title>
+<title>음성 리모컨 — 또박또박</title>
 <style>
+  /* ── 채널 드럼: 가구형(우드캐비닛 TV) 음성 리모컨 ──
+     아이보리 플라스틱 바탕 + 갈검정 잉크로 대비 사수.
+     상태색 분담: 듣는중=레드 / 인식=호박 / 전송=그린 / 전원·오류=레드. */
   :root {
-    --bg: #f4f6f9; --bg-press: #e9edf3; --ink: #11151c; --ink-2: #5a626e; --ink-3: #8a92a0;
-    --card: #fff; --line: #e3e7ee; --brand: #0b66ff; --brand-press: #0a52cc; --ok: #1f8a4c;
+    --ivory:#F2E9D8;       /* 몸체/배경 */
+    --ivory-2:#EAE0CC;     /* 살짝 눌린 면 */
+    --face:#FBF7EE;        /* 카드/타일 면 */
+    --walnut:#3A2417;      /* 베젤/테두리 */
+    --walnut-2:#4d3320;    /* 베젤 하이라이트 */
+    --ink:#1A130C;         /* 본문 잉크(갈검정) */
+    --ink-2:#6b5b49;       /* 보조 텍스트 */
+    --ink-3:#9a8a76;       /* 약한 텍스트 */
+    --amber:#E8A11C;       /* 인식 신호 */
+    --red:#C42B1C;         /* 라이브/전원/오류 */
+    --green:#1F7A3D;       /* 전송 확인 */
+    --line:#dccfb6;        /* 옅은 분할선 */
   }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; height: 100%; }
-  body { background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
-    display: flex; flex-direction: column; }
-  header { padding: 14px 18px calc(14px + env(safe-area-inset-top)); display: flex; align-items: center; gap: 10px; }
-  .brand { font-weight: 900; font-size: 19px; }
-  .brand .dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; background: var(--brand); margin-right: 7px; vertical-align: middle; }
-  .tag { font-size: 13px; font-weight: 700; color: var(--brand); background: #eaf1ff; padding: 4px 10px; border-radius: 999px; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; }
+  body {
+    background:var(--ivory); color:var(--ink);
+    font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",-apple-system,BlinkMacSystemFont,"Pretendard",sans-serif;
+    -webkit-font-smoothing:antialiased; line-height:1.5;
+    padding:0 16px calc(20px + env(safe-area-inset-bottom));
+    max-width:560px; margin:0 auto;
+  }
+  .wrap { display:flex; flex-direction:column; gap:14px; }
 
-  .note { margin: 0 16px 12px; font-size: 14px; line-height: 1.5; color: var(--ink-2); background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
-  .note b { color: var(--brand); }
+  /* 헤더 */
+  header { display:flex; align-items:center; justify-content:space-between;
+    padding:18px 2px calc(4px + env(safe-area-inset-top)); }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:900; font-size:20px; letter-spacing:-.01em; }
+  .logo { width:34px; height:26px; border:3px solid var(--walnut); border-radius:6px;
+    display:flex; align-items:center; justify-content:center; background:var(--face); }
+  .logo i { width:8px; height:8px; border-radius:50%; background:var(--amber); box-shadow:0 0 0 3px rgba(232,161,28,.18); }
+  .badge { font-size:12.5px; font-weight:800; letter-spacing:.04em; color:var(--walnut);
+    border:2px solid var(--walnut); border-radius:999px; padding:3px 10px; }
 
-  /* 인식 결과 표시 */
-  .screen { margin: 0 16px 14px; background: #fff; border: 1px solid var(--line); border-radius: 20px;
-    padding: 22px; text-align: center; min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .screen .icon { font-size: 56px; line-height: 1; }
-  .screen .label { font-size: 32px; font-weight: 900; margin-top: 8px; }
-  .screen .detail { font-size: 17px; font-weight: 600; color: var(--ink-2); margin-top: 6px; }
-  .screen .heard { font-size: 15px; color: var(--ink-3); margin-top: 12px; }
-  .screen.idle .label { color: var(--ink-3); font-weight: 800; }
-  .screen.unknown .label { color: #c12b2b; }
-  .screen.ok { border-color: #bfe3cc; background: #f3fbf6; }
+  /* 히어로: 호두나무 베젤 채널 드럼 창 */
+  .drum { border:7px solid var(--walnut); border-radius:20px; padding:7px;
+    background:linear-gradient(180deg,var(--walnut-2),var(--walnut));
+    box-shadow:0 10px 24px rgba(58,36,23,.22), inset 0 1px 0 rgba(255,255,255,.08); }
+  .screen { position:relative; overflow:hidden; background:var(--face); border-radius:13px;
+    min-height:180px; padding:22px 20px 20px; text-align:center;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; }
+  /* 좌상단 카테고리 꼭지 라벨 */
+  .chip { position:absolute; top:0; left:0; background:var(--walnut); color:var(--ivory);
+    font-size:14px; font-weight:800; letter-spacing:.08em; padding:6px 14px; border-radius:0 0 12px 0; }
+  .screen.idle .chip { display:none; }
+  .screen.unknown .chip { background:var(--red); }
+  /* 명령 글씨(주인공) */
+  .cmd { font-weight:900; letter-spacing:-.01em; color:var(--ink);
+    font-size:clamp(38px,11vw,62px); line-height:1.08; }
+  .screen.idle .cmd { font-size:clamp(24px,6.4vw,32px); color:var(--ink-2); font-weight:800; }
+  .screen.unknown .cmd { color:var(--red); }
+  .detail { font-size:18px; font-weight:600; color:var(--ink-2); }
+  .heard { font-size:15px; color:var(--ink-3); font-weight:600; }
+  .heard:empty { display:none; }
+  /* 인식 표시등(호박 글로우) */
+  .led { position:absolute; top:14px; right:14px; width:14px; height:14px; border-radius:50%;
+    background:#d8cdb6; transition:background .15s; }
+  .screen.ok .led { background:var(--amber); box-shadow:0 0 0 4px rgba(232,161,28,.22); animation:ledpulse .5s ease-out 1; }
+  .screen.unknown .led { background:var(--red); box-shadow:0 0 0 4px rgba(196,43,28,.2); }
+  @keyframes ledpulse { 0%{ box-shadow:0 0 0 0 rgba(232,161,28,.55);} 100%{ box-shadow:0 0 0 12px rgba(232,161,28,0);} }
+  /* 전송 완료 그린 띠 */
+  .sentband { display:none; align-items:center; justify-content:center; gap:7px;
+    width:calc(100% + 40px); margin:6px -20px -20px; padding:11px;
+    background:var(--green); color:#fff; font-weight:800; font-size:16px; }
+  .screen.sent .sentband { display:flex; }
+  .sentband svg { width:18px; height:18px; }
+  /* split-flap 등장 */
+  @keyframes drumflip { 0%{ transform:translateY(-12px) rotateX(-22deg); opacity:.15; } 55%{ opacity:1; } 100%{ transform:none; opacity:1; } }
+  .screen.flip { animation:drumflip .22s cubic-bezier(.2,.75,.25,1); transform-origin:top center; }
 
-  /* 음성 버튼 */
-  .mic { margin: 0 16px 16px; }
-  .mic button { width: 100%; min-height: 96px; border: none; border-radius: 22px; background: var(--brand); color: #fff;
-    font-size: 24px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; }
-  .mic button:active { background: var(--brand-press); }
-  .mic button.live { background: var(--ok); }
-  .mic .micico { font-size: 28px; }
+  /* 눌러서 말하기 막대 */
+  .mic { width:100%; min-height:96px; border:none; border-radius:18px; cursor:pointer;
+    background:linear-gradient(180deg,var(--walnut-2),var(--walnut)); color:var(--ivory);
+    font-size:23px; font-weight:900; letter-spacing:-.01em;
+    display:flex; align-items:center; justify-content:center; gap:14px; position:relative;
+    box-shadow:0 6px 16px rgba(58,36,23,.2); }
+  .mic:active { transform:translateY(1px); }
+  .mic svg { width:30px; height:30px; }
+  .mic .tally { display:none; width:13px; height:13px; border-radius:50%; background:var(--red); }
+  .mic.live { background:linear-gradient(180deg,#5a2018,#46160f); }
+  .mic.live .tally { display:inline-block; animation:blink 1s steps(2,jump-none) infinite; }
+  @keyframes blink { 50%{ opacity:.25; } }
+  .mic .level { display:none; align-items:flex-end; gap:4px; height:26px; margin-left:2px; }
+  .mic.live .level { display:flex; }
+  .mic .level i { width:5px; height:8px; background:var(--amber); border-radius:2px; animation:vu .9s ease-in-out infinite; }
+  .mic .level i:nth-child(2){ animation-delay:.15s; } .mic .level i:nth-child(3){ animation-delay:.3s; } .mic .level i:nth-child(4){ animation-delay:.45s; }
+  @keyframes vu { 0%,100%{ height:7px; } 50%{ height:24px; } }
 
-  /* 큰 버튼 그리드 */
-  .pad { margin: 0 16px calc(20px + env(safe-area-inset-bottom)); display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-  .pad button { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 16px 6px; cursor: pointer;
-    display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 17px; font-weight: 800; color: var(--ink); }
-  .pad button:active { background: var(--bg-press); }
-  .pad button .bico { font-size: 30px; }
-  .pad button.power { color: #c12b2b; }
-  .pad button.wide { grid-column: span 3; flex-direction: row; justify-content: center; gap: 10px; }
+  /* 채널 번호판 — 큰 버튼 그리드 */
+  .pad { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .pad button { background:var(--face); border:2px solid var(--walnut); border-radius:15px;
+    min-height:88px; padding:12px 6px; cursor:pointer; color:var(--ink);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px;
+    font-size:18px; font-weight:800; }
+  .pad button:active { background:var(--ivory-2); transform:translateY(1px); }
+  .pad button svg { width:30px; height:30px; }
+  .pad button.power { color:var(--red); border-color:var(--red); }
+  .pad button.wide { grid-column:1 / -1; flex-direction:row; min-height:64px; gap:12px; font-size:19px; }
 
-  footer { margin-top: auto; padding: 0 16px calc(16px + env(safe-area-inset-bottom)); text-align: center; }
-  footer a { color: var(--ink-3); font-size: 14px; text-decoration: none; }
+  /* LG TV 연결 — 계기판 서랍 */
+  .tvbox { background:var(--face); border:2px solid var(--walnut); border-radius:15px; overflow:hidden; }
+  .tvhead { display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:13px 15px; font-weight:800; font-size:16px; }
+  .tvhead .ttl { display:flex; align-items:center; gap:8px; }
+  .tvhead svg { width:20px; height:20px; }
+  .beta { font-size:11px; font-weight:800; letter-spacing:.03em; color:var(--walnut);
+    border:1.5px solid var(--walnut); border-radius:999px; padding:1px 7px; }
+  .tvstate { font-size:13px; font-weight:800; color:var(--ink-3); }
+  .tvstate.ok { color:var(--green); } .tvstate.err { color:var(--red); }
+  .tvbody { padding:14px 15px 16px; border-top:2px solid var(--line); }
+  .tvhelp { font-size:14px; line-height:1.55; color:var(--ink-2); margin:0 0 12px; }
+  .tvhelp b { color:var(--ink); }
+  .tvrow { display:flex; gap:8px; }
+  .tvip { flex:1 1 auto; min-width:0; font:inherit; font-size:19px; font-weight:700; font-variant-numeric:tabular-nums;
+    padding:12px; border:2px solid var(--line); border-radius:11px; background:#fff; color:var(--ink); }
+  .tvip:focus { outline:none; border-color:var(--amber); }
+  .tvbtn { flex:0 0 auto; white-space:nowrap; border:none; background:var(--walnut); color:var(--ivory); font-weight:800; font-size:17px;
+    padding:0 22px; border-radius:11px; cursor:pointer; }
+  .tvbtn:active { background:#2c1b11; }
+  .tvmsg { font-size:14px; font-weight:600; margin-top:11px; min-height:18px; color:var(--ink-2); }
+  .tvmsg.ok { color:var(--green); font-weight:800; } .tvmsg.err { color:var(--red); font-weight:800; }
 
-  /* LG TV 연결 패널 */
-  .tvbox { margin: 0 16px 16px; background: #fff; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
-  .tvhead { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; font-weight: 800; font-size: 16px; }
-  .beta { font-size: 11px; font-weight: 800; color: #8a6d00; background: #fff3cf; padding: 2px 7px; border-radius: 999px; vertical-align: middle; }
-  .tvstate { font-size: 13px; font-weight: 700; color: var(--ink-3); }
-  .tvstate.ok { color: var(--ok); }
-  .tvstate.err { color: #c12b2b; }
-  .tvbody { padding: 0 16px 16px; border-top: 1px solid var(--line); }
-  .tvhelp { font-size: 13.5px; line-height: 1.55; color: var(--ink-2); margin: 12px 0; }
-  .tvhelp b { color: var(--ink); }
-  .tvrow { display: flex; gap: 8px; }
-  .tvip { flex: 1; font: inherit; font-size: 18px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px; }
-  .tvip:focus { outline: none; border-color: var(--brand); }
-  .tvbtn { border: none; background: var(--brand); color: #fff; font-weight: 800; font-size: 16px; padding: 0 18px; border-radius: 11px; cursor: pointer; }
-  .tvbtn:active { background: var(--brand-press); }
-  .tvmsg { font-size: 13.5px; margin-top: 10px; min-height: 18px; color: var(--ink-2); }
-  .tvmsg.ok { color: var(--ok); font-weight: 700; }
-  .tvmsg.err { color: #c12b2b; font-weight: 700; }
+  footer { text-align:center; padding:6px 0 2px; }
+  footer a { color:var(--ink-3); font-size:15px; font-weight:700; text-decoration:none; }
 
-  @media (min-width: 560px) { .screen, .note, .mic, .pad, .tvbox { max-width: 520px; margin-left: auto; margin-right: auto; } }
+  :focus-visible { outline:3px solid var(--amber); outline-offset:2px; border-radius:6px; }
+  .pad button.power:focus-visible, .mic:focus-visible { outline-color:var(--ink); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .screen.flip { animation:none; }
+    .screen.ok .led { animation:none; }
+    .mic.live .tally { animation:none; }
+    .mic .level i { animation:none; height:14px; }
+    .mic:active, .pad button:active { transform:none; }
+  }
 </style>
 </head>
 <body>
   <header>
-    <span class="brand"><span class="dot"></span>음성 리모컨</span>
-    <span class="tag">프로토타입</span>
+    <span class="brand"><span class="logo"><i></i></span>음성 리모컨</span>
+    <span class="badge">시제품</span>
   </header>
 
-  <div class="note">
-    말로 TV를 조작하는 <b>음성 리모컨</b> 시제품이에요. 지금은 <b>말을 알아듣고 명령으로 바꾸는 것</b>까지 보여줘요.
-    실제 TV 연결(전원·채널)은 다음 단계입니다.
-  </div>
-
-  <div class="screen idle" id="screen">
-    <div class="icon" id="scIcon">🎙️</div>
-    <div class="label" id="scLabel">버튼을 누르고 말해보세요</div>
-    <div class="detail" id="scDetail">예: “소리 키워줘”, “다음 채널”, “유튜브 틀어줘”</div>
-    <div class="heard" id="scHeard"></div>
-  </div>
-
-  <div class="mic">
-    <button id="micBtn" type="button"><span class="micico">🎤</span><span id="micText">눌러서 말하기</span></button>
-  </div>
-
-  <div class="pad">
-    <button class="power" data-cmd="POWER" type="button"><span class="bico">⏻</span>전원</button>
-    <button data-cmd="CH_UP" type="button"><span class="bico">📺</span>채널 +</button>
-    <button data-cmd="VOL_UP" type="button"><span class="bico">🔊</span>소리 +</button>
-    <button data-cmd="MUTE" type="button"><span class="bico">🔇</span>음소거</button>
-    <button data-cmd="CH_DOWN" type="button"><span class="bico">📺</span>채널 −</button>
-    <button data-cmd="VOL_DOWN" type="button"><span class="bico">🔉</span>소리 −</button>
-    <button class="wide" data-cmd="HOME" type="button"><span class="bico">🏠</span>홈 / 앱 목록</button>
-  </div>
-
-  <!-- LG TV 연결 (베타) -->
-  <div class="tvbox" id="tvbox">
-    <div class="tvhead">
-      <span>📺 LG TV 연결 <span class="beta">베타</span></span>
-      <span class="tvstate" id="tvState">연결 안 됨</span>
-    </div>
-    <div class="tvbody" id="tvBody">
-      <p class="tvhelp">실제 TV 제어는 <b>또박또박 앱</b>에서, TV와 <b>같은 와이파이</b>일 때 동작해요.<br>
-        TV의 IP는 LG TV의 <b>설정 → 네트워크</b>에서 볼 수 있어요.</p>
-      <div class="tvrow">
-        <input id="tvIp" class="tvip" type="text" inputmode="decimal" autocomplete="off" placeholder="예: 192.168.0.12" aria-label="TV IP 주소">
-        <button id="tvConnect" class="tvbtn" type="button">연결</button>
+  <div class="wrap">
+    <!-- 히어로: 채널 드럼 창 -->
+    <div class="drum">
+      <div class="screen idle" id="screen">
+        <span class="chip" id="scIcon">명령</span>
+        <div class="cmd" id="scLabel">버튼을 누르고 말해보세요</div>
+        <div class="detail" id="scDetail">예: “소리 키워줘”, “다음 채널”, “유튜브 틀어줘”</div>
+        <div class="heard" id="scHeard"></div>
+        <div class="sentband" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>TV로 보냄
+        </div>
+        <span class="led" aria-hidden="true"></span>
       </div>
-      <div class="tvmsg" id="tvMsg"></div>
     </div>
-  </div>
 
-  <footer><a href="./">← 또박또박으로</a></footer>
+    <!-- 눌러서 말하기 -->
+    <button class="mic" id="micBtn" type="button">
+      <span class="tally" aria-hidden="true"></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+      <span id="micText">눌러서 말하기</span>
+      <span class="level" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    </button>
+
+    <!-- 채널 번호판 -->
+    <div class="pad">
+      <button class="power" data-cmd="POWER" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v9"/><path d="M6.6 6.6a8 8 0 1 0 10.8 0"/></svg>전원</button>
+      <button data-cmd="CH_UP" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7.5" width="19" height="12" rx="2"/><path d="M8 4l4-2 4 2"/><path d="M12 10v6M9 13h6"/></svg>채널 +</button>
+      <button data-cmd="VOL_UP" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5v5h3.5L13 19V5L7.5 9.5H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a9 9 0 0 1 0 12"/></svg>소리 +</button>
+      <button data-cmd="MUTE" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5v5h3.5L13 19V5L7.5 9.5H4z"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>음소거</button>
+      <button data-cmd="CH_DOWN" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7.5" width="19" height="12" rx="2"/><path d="M8 4l4-2 4 2"/><path d="M9 13h6"/></svg>채널 −</button>
+      <button data-cmd="VOL_DOWN" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5v5h3.5L13 19V5L7.5 9.5H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>소리 −</button>
+      <button class="wide" data-cmd="HOME" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>홈 / 앱 목록</button>
+    </div>
+
+    <!-- LG TV 연결 -->
+    <div class="tvbox" id="tvbox">
+      <div class="tvhead">
+        <span class="ttl">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="13" rx="2"/><path d="M8 21h8"/></svg>
+          LG TV 연결 <span class="beta">베타</span>
+        </span>
+        <span class="tvstate" id="tvState">연결 안 됨</span>
+      </div>
+      <div class="tvbody" id="tvBody">
+        <p class="tvhelp">실제 TV 제어는 <b>또박또박 앱</b>에서, TV와 <b>같은 와이파이</b>일 때 동작해요.
+          TV의 IP는 LG TV의 <b>설정 → 네트워크</b>에서 볼 수 있어요.</p>
+        <div class="tvrow">
+          <input id="tvIp" class="tvip" type="text" inputmode="decimal" autocomplete="off" placeholder="예: 192.168.0.12" aria-label="TV IP 주소">
+          <button id="tvConnect" class="tvbtn" type="button">연결</button>
+        </div>
+        <div class="tvmsg" id="tvMsg"></div>
+      </div>
+    </div>
+
+    <footer><a href="./">← 또박또박으로</a></footer>
+  </div>
 
 <script src="lg-webos.js"></script>
 <script>
@@ -131,7 +222,6 @@
   "use strict";
 
   // ── 한국어 음성 명령 → 의도(intent) 파서 ──
-  // TV 연결 전이라 실제 동작 대신 인식된 명령을 표시(mock). Phase 1에서 이 의도를 TV 제어로 연결.
   function A(label, icon, detail, cmd, kind, value) {
     return { label: label, icon: icon, detail: detail, cmd: cmd || null, kind: kind || "ok", value: value };
   }
@@ -139,31 +229,23 @@
     var s = (raw || "").replace(/\s+/g, "");
     if (!s) return null;
     var num = (s.match(/(\d+)\s*번/) || s.match(/(\d+)/) || [])[1];
-    // 1) 음소거 (전원 '꺼'와 겹치지 않게 먼저)
     if (/(음소거|무음|소리꺼|소리끄|조용)/.test(s)) return A("음소거", "🔇", "소리를 끕니다", "MUTE");
-    // 2) 음량
     if (/(소리|음량|볼륨)/.test(s) && /(키|높|올|크)/.test(s)) return A("소리 키우기", "🔊", "음량을 올립니다", "VOL_UP");
     if (/(소리|음량|볼륨)/.test(s) && /(줄|낮|내|작)/.test(s)) return A("소리 줄이기", "🔉", "음량을 내립니다", "VOL_DOWN");
-    // 3) 채널
     if (num && /(채널|번)/.test(s)) return A(num + "번", "📺", num + "번 채널로 이동", "CH_NUM", "ok", num);
     if (/채널/.test(s) && /(다음|올|위|넘|다음거)/.test(s)) return A("다음 채널", "📺", "채널을 올립니다", "CH_UP");
     if (/채널/.test(s) && /(이전|내|아래|뒤|전거)/.test(s)) return A("이전 채널", "📺", "채널을 내립니다", "CH_DOWN");
-    // 4) 앱/콘텐츠
     if (/유튜브|유투브/.test(s)) return A("유튜브", "▶️", "유튜브를 엽니다", "APP", "ok", "youtube");
     if (/넷플릭스|넷플/.test(s)) return A("넷플릭스", "▶️", "넷플릭스를 엽니다", "APP", "ok", "netflix");
     if (/뉴스/.test(s)) return A("뉴스", "📰", "TV를 켭니다", "APP", "ok", "tv");
     if (/노래방|노래/.test(s)) return A("노래방", "🎤", "노래방을 켭니다", null);
-    // 5) 채널만 언급
     if (/채널/.test(s)) return A("다음 채널", "📺", "채널을 올립니다", "CH_UP");
-    // 6) 전원 (소리/채널 아닌 경우)
     if (/(켜)/.test(s)) return A("전원 켜기", "⏻", "TV를 켭니다", "POWER_ON");
     if (/(꺼|끄)/.test(s)) return A("전원 끄기", "⏻", "TV를 끕니다", "POWER_OFF");
-    // 못 알아들음
     return A("잘 못 들었어요", "❓", "다시 한 번 말씀해 주세요", null, "unknown");
   }
   window.__parseIntent = parseIntent; // 테스트용
 
-  // 버튼(물리) → 의도 매핑
   var BTN = {
     POWER: A("전원 끄기", "⏻", "TV를 끕니다", "POWER_OFF"),
     CH_UP: A("다음 채널", "📺", "채널을 올립니다", "CH_UP"),
@@ -178,14 +260,34 @@
   var scIcon = document.getElementById("scIcon"), scLabel = document.getElementById("scLabel");
   var scDetail = document.getElementById("scDetail"), scHeard = document.getElementById("scHeard");
 
+  // 명령 카테고리 꼭지 라벨(방송 슈퍼 느낌)
+  function catLabel(act) {
+    if (!act) return "명령";
+    if (act.kind === "unknown") return "다시";
+    switch (act.cmd) {
+      case "VOL_UP": case "VOL_DOWN": case "MUTE": return "음량";
+      case "CH_UP": case "CH_DOWN": case "CH_NUM": return "채널";
+      case "POWER_OFF": case "POWER_ON": return "전원";
+      case "APP": return "앱";
+      default: return "명령";
+    }
+  }
+  // 채널 드럼 split-flap 재시작
+  function flip() {
+    screen.classList.remove("flip");
+    void screen.offsetWidth;
+    screen.classList.add("flip");
+  }
+
   function showAction(act, heard) {
     if (!act) return;
-    screen.className = "screen " + (act.kind === "unknown" ? "unknown" : "ok");
-    scIcon.textContent = act.icon;
-    scLabel.textContent = act.label;
     var sent = sendToTV(act);
-    scDetail.textContent = act.detail + (sent ? "  ·  TV로 보냄 ✅" : "");
+    screen.className = "screen " + (act.kind === "unknown" ? "unknown" : "ok") + (sent ? " sent" : "");
+    scIcon.textContent = catLabel(act);
+    scLabel.textContent = act.label;
+    scDetail.textContent = act.detail;
     scHeard.textContent = heard ? ("들은 말: “" + heard + "”") : "";
+    flip();
   }
 
   // 연결된 LG TV로 실제 명령 전송. 연결 안 됐거나 미지원 명령이면 false.
@@ -269,7 +371,6 @@
     });
   });
 
-  // 이전에 넣은 IP 복원
   try { var last = localStorage.getItem("lgtv_last_ip"); if (last) tvIp.value = last; } catch (e) {}
 })();
 </script>
