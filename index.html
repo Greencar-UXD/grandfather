@@ -81,7 +81,7 @@
     flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
     gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--card);
   }
-  header .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px; letter-spacing: -0.4px; }
+  header .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 18px; letter-spacing: -0.4px; }
   header .brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ink-2); flex: 0 0 auto; transition: background .2s; }
   body.listening header .brand .dot { background: var(--stop); animation: blink 1s steps(2, start) infinite; }
   @keyframes blink { 50% { opacity: .25; } }
@@ -98,7 +98,7 @@
   /* 글씨 크기 조절 */
   .fontctl { display: flex; align-items: center; gap: 6px; }
   .fontctl button {
-    font: inherit; font-weight: 800; font-size: 18px; width: 44px; height: 44px;
+    font: inherit; font-weight: 700; font-size: 18px; width: 44px; height: 44px;
     border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 12px; cursor: pointer;
   }
   .fontctl button:active { background: var(--bg-press); }
@@ -130,8 +130,8 @@
   /* ── 하단 큰 버튼 ── */
   footer { flex: 0 0 auto; padding: 14px 18px calc(18px + env(safe-area-inset-bottom)); }
   #mainBtn {
-    width: 100%; min-height: 92px; border: none; border-radius: 18px;
-    font-family: inherit; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;
+    width: 100%; min-height: 92px; border: none; border-radius: 16px;
+    font-family: inherit; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;
     color: #fff; background: var(--brand); cursor: pointer;
     display: flex; align-items: center; justify-content: center; gap: 12px;
     box-shadow: 0 8px 20px -8px rgba(45,91,255,.5); transition: transform .06s, background .15s;
@@ -145,7 +145,7 @@
 
   /* 듣는 중 펄스 표시 */
   .pulse { display: inline-flex; align-items: center; gap: 5px; }
-  .pulse i { width: 6px; height: 20px; background: rgba(255,255,255,.9); border-radius: 3px; animation: eq 1s ease-in-out infinite; }
+  .pulse i { width: 6px; height: 20px; background: rgba(255,255,255,.9); border-radius: 4px; animation: eq 1s ease-in-out infinite; }
   .pulse i:nth-child(2){ animation-delay:.15s } .pulse i:nth-child(3){ animation-delay:.3s }
   /* 실제 마이크 입력에 반응하는 동안엔 CSS 자동 애니메이션을 끄고 JS로 높이를 준다 */
   .pulse.live i { animation: none; will-change: transform; }
@@ -155,7 +155,7 @@
   .sub { display: flex; justify-content: center; margin-top: 12px; }
   .sub button {
     font: inherit; font-size: 16px; font-weight: 700; color: var(--ink-2);
-    background: transparent; border: none; padding: 8px 14px; cursor: pointer; border-radius: 10px;
+    background: transparent; border: none; padding: 8px 14px; cursor: pointer; border-radius: 12px;
     display: inline-flex; align-items: center; gap: 6px;
   }
   .sub button .ico-svg { width: 18px; height: 18px; }
@@ -164,7 +164,7 @@
 
   /* 미지원/오류 안내 박스 */
   .notice {
-    margin: 0 18px 12px; padding: 14px 16px; border-radius: 14px;
+    margin: 0 18px 12px; padding: 14px 16px; border-radius: 16px;
     background: var(--danger-bg); border: 1px solid var(--danger-line); color: var(--danger-ink); font-size: 16px; line-height: 1.55;
   }
   .notice[hidden] { display: none; }
@@ -174,17 +174,17 @@
   .inapp-ov { position: fixed; inset: 0; z-index: 1000; background: rgba(17,21,28,.55);
     display: flex; align-items: center; justify-content: center; padding: 20px; overflow: auto; }
   .inapp-ov[hidden] { display: none; }
-  .inapp-card { background: #fff; border-radius: 24px; max-width: 460px; width: 100%;
+  .inapp-card { background: #fff; border-radius: 20px; max-width: 460px; width: 100%;
     padding: 30px 24px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.32); }
   .inapp-emoji { font-size: 56px; line-height: 1; color: var(--brand); }
-  .inapp-title { font-size: 31px; font-weight: 900; color: var(--ink); margin-top: 10px; }
+  .inapp-title { font-size: 31px; font-weight: 700; color: var(--ink); margin-top: 10px; }
   .inapp-desc { font-size: 19px; font-weight: 600; line-height: 1.65; color: var(--ink-2); margin-top: 14px; }
   .inapp-desc b { color: var(--brand); }
   .inapp-primary { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin-top: 24px; font: inherit; font-size: 23px;
-    font-weight: 900; color: #fff; background: var(--brand); border: none; border-radius: 18px; padding: 19px; cursor: pointer; }
+    font-weight: 700; color: #fff; background: var(--brand); border: none; border-radius: 16px; padding: 19px; cursor: pointer; }
   .inapp-primary .ico-svg { width: 24px; height: 24px; }
   .inapp-secondary { display: block; width: 100%; margin-top: 10px; font: inherit; font-size: 18px;
-    font-weight: 800; color: var(--brand); background: #fff; border: 2px solid var(--brand); border-radius: 16px; padding: 15px; cursor: pointer; }
+    font-weight: 700; color: var(--brand); background: #fff; border: 2px solid var(--brand); border-radius: 16px; padding: 15px; cursor: pointer; }
   .inapp-hint { font-size: 15px; line-height: 1.55; color: var(--ink-2); margin-top: 20px;
     background: var(--bg); border-radius: 12px; padding: 12px 14px; }
   .inapp-hint b { color: var(--ink); }
@@ -204,7 +204,7 @@
   body.bigscreen #adSlot { display: none !important; }
   body.bigscreen main { padding: 28px 30px 8px; }
   body.bigscreen .status { display: none; }
-  body.bigscreen #text { color: #f3f4f6; font-weight: 800; max-width: none; }   /* DS dark text-primary */
+  body.bigscreen #text { color: #f3f4f6; font-weight: 700; max-width: none; }   /* DS dark text-primary */
   body.bigscreen #text.placeholder { color: #9aa1ab; font-weight: 700; }        /* DS dark text-secondary */
   body.bigscreen #text .interim { color: #6b727d; }                              /* DS dark text-tertiary */
   body.bigscreen footer { background: #0d0f12; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); }
@@ -227,17 +227,17 @@
   .room-ov { position: fixed; inset: 0; z-index: 1000; background: rgba(17,21,28,.55);
     display: flex; align-items: center; justify-content: center; padding: 20px; overflow: auto; }
   .room-ov[hidden] { display: none; }
-  .room-card { background: #fff; border-radius: 24px; max-width: 440px; width: 100%;
+  .room-card { background: #fff; border-radius: 20px; max-width: 440px; width: 100%;
     padding: 30px 24px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.32); }
-  .room-title { font-size: 27px; font-weight: 900; color: var(--ink); }
+  .room-title { font-size: 27px; font-weight: 700; color: var(--ink); }
   .room-desc { font-size: 17px; font-weight: 600; line-height: 1.6; color: var(--ink-2); margin-top: 12px; }
   .room-desc b { color: var(--brand); }
-  .room-code { font-family: ui-monospace, Menlo, monospace; font-size: 56px; font-weight: 900; letter-spacing: 8px;
+  .room-code { font-family: ui-monospace, Menlo, monospace; font-size: 56px; font-weight: 700; letter-spacing: 8px;
     color: var(--brand); margin: 22px 0 6px; }
   .room-status { font-size: 15px; color: var(--ink-2); min-height: 22px; margin-bottom: 16px; }
   .room-status.ok { color: var(--ok); font-weight: 700; }
   .room-status.err { color: var(--danger-ink); font-weight: 700; }
-  .room-input { width: 100%; margin: 18px 0 8px; font: inherit; font-size: 34px; font-weight: 800;
+  .room-input { width: 100%; margin: 18px 0 8px; font: inherit; font-size: 34px; font-weight: 700;
     text-align: center; letter-spacing: 8px; text-transform: uppercase; color: var(--ink);
     border: 2px solid var(--line); border-radius: 16px; padding: 14px; box-sizing: border-box; }
   .room-input:focus { outline: none; border-color: var(--brand); }
@@ -259,7 +259,7 @@
     #mainBtn:active { transform: none; }
   }
 
-  @media (min-width: 700px) {
+  @media (min-width: 768px) {
     :root { --fs: 52px; }
     header .brand { font-size: 20px; }
   }
