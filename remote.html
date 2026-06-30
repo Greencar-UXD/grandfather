@@ -139,7 +139,7 @@
   footer a:hover { color:var(--text-primary); }
 
   button, a, input { touch-action: manipulation; }   /* 탭 300ms 지연 제거(핀치 줌 유지) */
-  :focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; border-radius:6px; }
+  :focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; border-radius: 8px; }
 
   @media (prefers-reduced-motion: reduce) {
     .screen.flip { animation:none; }
@@ -230,31 +230,31 @@
     var s = (raw || "").replace(/\s+/g, "");
     if (!s) return null;
     var num = (s.match(/(\d+)\s*번/) || s.match(/(\d+)/) || [])[1];
-    if (/(음소거|무음|소리꺼|소리끄|조용)/.test(s)) return A("음소거", "🔇", "소리를 끕니다", "MUTE");
-    if (/(소리|음량|볼륨)/.test(s) && /(키|높|올|크)/.test(s)) return A("소리 키우기", "🔊", "음량을 올립니다", "VOL_UP");
-    if (/(소리|음량|볼륨)/.test(s) && /(줄|낮|내|작)/.test(s)) return A("소리 줄이기", "🔉", "음량을 내립니다", "VOL_DOWN");
-    if (num && /(채널|번)/.test(s)) return A(num + "번", "📺", num + "번 채널로 이동", "CH_NUM", "ok", num);
-    if (/채널/.test(s) && /(다음|올|위|넘|다음거)/.test(s)) return A("다음 채널", "📺", "채널을 올립니다", "CH_UP");
-    if (/채널/.test(s) && /(이전|내|아래|뒤|전거)/.test(s)) return A("이전 채널", "📺", "채널을 내립니다", "CH_DOWN");
-    if (/유튜브|유투브/.test(s)) return A("유튜브", "▶️", "유튜브를 엽니다", "APP", "ok", "youtube");
-    if (/넷플릭스|넷플/.test(s)) return A("넷플릭스", "▶️", "넷플릭스를 엽니다", "APP", "ok", "netflix");
-    if (/뉴스/.test(s)) return A("뉴스", "📰", "TV를 켭니다", "APP", "ok", "tv");
-    if (/노래방|노래/.test(s)) return A("노래방", "🎤", "노래방을 켭니다", null);
-    if (/채널/.test(s)) return A("다음 채널", "📺", "채널을 올립니다", "CH_UP");
+    if (/(음소거|무음|소리꺼|소리끄|조용)/.test(s)) return A("음소거", "", "소리를 끕니다", "MUTE");
+    if (/(소리|음량|볼륨)/.test(s) && /(키|높|올|크)/.test(s)) return A("소리 키우기", "", "음량을 올립니다", "VOL_UP");
+    if (/(소리|음량|볼륨)/.test(s) && /(줄|낮|내|작)/.test(s)) return A("소리 줄이기", "", "음량을 내립니다", "VOL_DOWN");
+    if (num && /(채널|번)/.test(s)) return A(num + "번", "", num + "번 채널로 이동", "CH_NUM", "ok", num);
+    if (/채널/.test(s) && /(다음|올|위|넘|다음거)/.test(s)) return A("다음 채널", "", "채널을 올립니다", "CH_UP");
+    if (/채널/.test(s) && /(이전|내|아래|뒤|전거)/.test(s)) return A("이전 채널", "", "채널을 내립니다", "CH_DOWN");
+    if (/유튜브|유투브/.test(s)) return A("유튜브", "", "유튜브를 엽니다", "APP", "ok", "youtube");
+    if (/넷플릭스|넷플/.test(s)) return A("넷플릭스", "", "넷플릭스를 엽니다", "APP", "ok", "netflix");
+    if (/뉴스/.test(s)) return A("뉴스", "", "TV를 켭니다", "APP", "ok", "tv");
+    if (/노래방|노래/.test(s)) return A("노래방", "", "노래방을 켭니다", null);
+    if (/채널/.test(s)) return A("다음 채널", "", "채널을 올립니다", "CH_UP");
     if (/(켜)/.test(s)) return A("전원 켜기", "⏻", "TV를 켭니다", "POWER_ON");
     if (/(꺼|끄)/.test(s)) return A("전원 끄기", "⏻", "TV를 끕니다", "POWER_OFF");
-    return A("잘 못 들었어요", "❓", "다시 한 번 말씀해 주세요", null, "unknown");
+    return A("잘 못 들었어요", "", "다시 한 번 말씀해 주세요", null, "unknown");
   }
   window.__parseIntent = parseIntent; // 테스트용
 
   var BTN = {
     POWER: A("전원 끄기", "⏻", "TV를 끕니다", "POWER_OFF"),
-    CH_UP: A("다음 채널", "📺", "채널을 올립니다", "CH_UP"),
-    CH_DOWN: A("이전 채널", "📺", "채널을 내립니다", "CH_DOWN"),
-    VOL_UP: A("소리 키우기", "🔊", "음량을 올립니다", "VOL_UP"),
-    VOL_DOWN: A("소리 줄이기", "🔉", "음량을 내립니다", "VOL_DOWN"),
-    MUTE: A("음소거", "🔇", "소리를 끕니다", "MUTE"),
-    HOME: A("홈 / 앱 목록", "🏠", "홈 화면을 엽니다", null)
+    CH_UP: A("다음 채널", "", "채널을 올립니다", "CH_UP"),
+    CH_DOWN: A("이전 채널", "", "채널을 내립니다", "CH_DOWN"),
+    VOL_UP: A("소리 키우기", "", "음량을 올립니다", "VOL_UP"),
+    VOL_DOWN: A("소리 줄이기", "", "음량을 내립니다", "VOL_DOWN"),
+    MUTE: A("음소거", "", "소리를 끕니다", "MUTE"),
+    HOME: A("홈 / 앱 목록", "", "홈 화면을 엽니다", null)
   };
 
   var screen = document.getElementById("screen");
